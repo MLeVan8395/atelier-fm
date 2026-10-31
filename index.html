@@ -174,7 +174,7 @@ button.chordopt{font-family:var(--chord);font-weight:700;font-size:1.05rem}
 
 <section class="panel" id="p-intervalles" aria-labelledby="h-int">
   <h2 id="h-int">Intervalles et accords</h2>
-  <p class="lead">Deux façons de travailler, séparément : <b>à la lecture</b> (la portée, sans le son) ou <b>à l'oreille</b> (le son, sans la portée, qui n'apparaît qu'avec la correction). Les intervalles sont notés comme dans le livret : ♭2, 2, ♭3, 3… En <b>dictée mélodique</b>, écoute une courte mélodie et retrouve sa partition parmi trois.</p>
+  <p class="lead">Deux façons de travailler, séparément : <b>à la lecture</b> (la portée, sans le son) ou <b>à l'oreille</b> (le son, sans la portée, qui n'apparaît qu'avec la correction). Les intervalles sont notés comme dans le livret : ♭2, 2, ♭3, 3… En <b>dictée mélodique</b>, écoute une courte mélodie construite sur un matériau du livret (gammes, pentatoniques, blues, modes), parfois swing, et retrouve sa partition parmi trois.</p>
   <div class="row" style="margin-bottom:14px">
     <div class="sub" role="group" aria-label="Contenu" style="margin:0">
       <button type="button" id="ivModeInt" aria-pressed="true">Intervalles</button>
@@ -190,7 +190,7 @@ button.chordopt{font-family:var(--chord);font-weight:700;font-size:1.05rem}
     <div class="qtext" id="ivQ" style="margin:0"></div>
     <div class="staffwrap" id="ivStaff"></div>
     <div class="meta" id="ivMelKey" hidden></div>
-    <div class="row"><button id="ivPlay" class="primary" type="button">▶ Écouter</button><span id="ivMelRow" class="row" hidden><button id="melTonic" class="ghost" type="button">Accord de la tonalité</button><label class="meta">Tempo <select id="melTempo"><option value="lent">lent</option><option value="moyen">moyen</option><option value="rapide">rapide</option></select></label></span><span class="meta" id="ivScore"></span></div>
+    <div class="row"><button id="ivPlay" class="primary" type="button">▶ Écouter</button><span id="ivMelRow" class="row" hidden><button id="melTonic" class="ghost" type="button">Accord de référence</button><label class="meta">Tempo <select id="melTempo"><option value="lent">lent</option><option value="moyen">moyen</option><option value="rapide">rapide</option></select></label></span><span class="meta" id="ivScore"></span></div>
     <div class="row" id="ivOpts"></div>
     <div class="fb" id="ivFb" hidden></div>
     <div class="row"><button id="ivNext" class="primary" type="button">Exemple suivant</button></div>
@@ -668,86 +668,103 @@ function ivPlay(){ if(IVM==='mel') return melPlay(); if(!IVC||IVW!=='ear') retur
 }
 
 
-// ===== Dictée mélodique : une mélodie générée, trois partitions =====
-const MEL_KEYS={1:['C','G','F'],2:['C','G','F','D','B♭','Am','Em','Dm']};
-const SIGN={C:0,G:1,D:2,F:-1,'B♭':-2,Am:0,Em:1,Dm:-1};
+// ===== Dictée mélodique : une mélodie générée sur un matériau du livret, trois partitions =====
+// Matériaux : notes de la gamme [degré-lettre au-dessus de la tonique, demi-tons] ; ton = [tonique, tonalité majeure qui donne l'armure] ;
+// car = indices des notes caractéristiques (au moins une dans la mélodie) ; ch = accord de référence ; sw = chance d'être joué swing
+const MATS={
+ maj:  {c:1,w:3,lab:t=>`${t} majeur`,sc:[[0,0],[1,2],[2,4],[3,5],[4,7],[5,9],[6,11]],ton:[['C','C'],['G','G'],['F','F'],['D','D'],['B♭','B♭']],ch:'',sw:0.15,end:[-1,1]},
+ min:  {c:1,w:2,lab:t=>`${t} mineur naturel`,sc:[[0,0],[1,2],[2,3],[3,5],[4,7],[5,8],[6,10]],ton:[['A','C'],['E','G'],['D','F']],ch:'m',sw:0.15,end:[1,-1],car:[5]},
+ pmaj: {c:1,w:2,lab:t=>`pentatonique majeure en ${t}`,sc:[[0,0],[1,2],[2,4],[4,7],[5,9]],ton:[['C','C'],['G','G'],['F','F'],['D','D']],ch:'',sw:0.3,end:[1,-1],car:[4]},
+ pmin: {c:1,w:2,lab:t=>`pentatonique mineure en ${t}`,sc:[[0,0],[2,3],[3,5],[4,7],[6,10]],ton:[['A','C'],['E','G'],['D','F']],ch:'m7',sw:0.5,end:[1,-1],car:[1]},
+ blues:{c:1,w:3,lab:t=>`gamme blues en ${t}`,sc:[[0,0],[2,3],[3,5],[4,6],[4,7],[6,10]],ton:[['A','C'],['E','G'],['D','F']],ch:'7',sw:0.7,end:[1,-1],car:[3]},
+ harm: {c:2,w:2,lab:t=>`${t} mineur harmonique`,sc:[[0,0],[1,2],[2,3],[3,5],[4,7],[5,8],[6,11]],ton:[['A','C'],['E','G'],['D','F']],ch:'m',sw:0,end:[-1],car:[6]},
+ dor:  {c:2,w:2,lab:t=>`${t} dorien`,sc:[[0,0],[1,2],[2,3],[3,5],[4,7],[5,9],[6,10]],ton:[['D','C'],['A','G'],['E','D']],ch:'m7',sw:0.4,end:[1,-1],car:[5]},
+ mixo: {c:2,w:2,lab:t=>`${t} mixolydien`,sc:[[0,0],[1,2],[2,4],[3,5],[4,7],[5,9],[6,10]],ton:[['G','C'],['D','G'],['A','D']],ch:'7',sw:0.5,end:[1,-1],car:[6]},
+ lyd:  {c:2,w:1,lab:t=>`${t} lydien`,sc:[[0,0],[1,2],[2,4],[3,6],[4,7],[5,9],[6,11]],ton:[['F','C'],['C','G'],['G','D']],ch:'Maj7',sw:0,end:[1,-1],car:[3]},
+ phr:  {c:2,w:1,lab:t=>`${t} phrygien`,sc:[[0,0],[1,1],[2,3],[3,5],[4,7],[5,8],[6,10]],ton:[['E','C'],['A','F'],['B','G']],ch:'m',sw:0,end:[1,-1],car:[1]},
+};
+const SIGN={C:0,G:1,D:2,A:3,F:-1,'B♭':-2,'E♭':-3};
 const SH_ORDER=[3,0,4,1,5,2,6], FL_ORDER=[6,2,5,1,4,0,3];
-const SH_POS=[38,35,39,36,33,37,34], FL_POS=[34,37,33,36,32,35,31]; // positions sur la portée (dpos) des altérations de l'armure
-const MINOR=k=>/m$/.test(k);
-const sigAcc=(k,l)=>{ const s=SIGN[k]; if(s>0) return SH_ORDER.slice(0,s).includes(l)?1:0; if(s<0) return FL_ORDER.slice(0,-s).includes(l)?-1:0; return 0; };
-// degré (0 = tonique, peut être négatif ou dépasser 7) → note
-function melNote(k,d,lead){ const t=Object.assign({o:4},parseRoot(k.replace(/m$/,'')).n); if(t.l>=5) t.o=3; // tonique entre Fa3 et Mi4… ramenée dans la portée
-  const pat=MINOR(k)?[0,2,3,5,7,8,lead?11:10]:[0,2,4,5,7,9,11], oc=Math.floor(d/7), i=((d%7)+7)%7;
-  return up(t,d,12*oc+pat[i]); }
+const SH_POS=[38,35,39,36,33,37,34], FL_POS=[34,37,33,36,32,35,31]; // positions (dpos) des altérations de l'armure
+const sigAcc=(sk,l)=>{ const s=SIGN[sk]; if(s>0) return SH_ORDER.slice(0,s).includes(l)?1:0; if(s<0) return FL_ORDER.slice(0,-s).includes(l)?-1:0; return 0; };
+const ORD=i=>i===0?'1re':`${i+1}e`;
+// indice dans la gamme (0 = tonique ; négatif = en dessous) → note
+function melNote(cfg,i){ const sc=MATS[cfg.mat].sc, L=sc.length, oc=Math.floor(i/L), [st,se]=sc[((i%L)+L)%L];
+  return up(Object.assign({o:4},parseRoot(cfg.ton).n),st+7*oc,se+12*oc); }
 const MELBPM={lent:60,moyen:80,rapide:100};
 let MEL=null, MELT='moyen';
 try{const t=localStorage.getItem('atelier-fm-tempo-mel'); if(MELBPM[t]) MELT=t;}catch(e){}
 function melRhythm(cyc){ // durées en croches ; 2 mesures de 4/4, la dernière note est une blanche
-  const beat=()=>Math.random()<(cyc===1?0.3:0.4)?[1,1]:[2];
-  let m1=[]; if(cyc===2&&Math.random()<0.4){ const at=rnd([0,2]); for(let b=0;b<4;){ if(b===at){ m1.push(3,1); b+=2; } else { m1.push(...beat()); b++; } } } else for(let b=0;b<4;b++) m1.push(...beat());
-  const m2=[...beat(),...beat(),4];
-  return [m1,m2];
+  const beat=()=>Math.random()<(cyc===1?0.35:0.45)?[1,1]:[2];
+  const m1=[]; if(cyc===2&&Math.random()<0.4){ const at=rnd([0,2]); for(let b=0;b<4;){ if(b===at){ m1.push(3,1); b+=2; } else { m1.push(...beat()); b++; } } } else for(let b=0;b<4;b++) m1.push(...beat());
+  return m1.concat([...beat(),...beat(),4]);
 }
+function pickMat(cyc){ const pool=Object.entries(MATS).filter(([,m])=>m.c<=cyc).flatMap(([k,m])=>Array(m.w+(cyc===2&&m.c===2?1:0)).fill(k)); return rnd(pool); }
 function melNew(){
-  const cyc=CYCLE, k=rnd(MEL_KEYS[cyc]), [m1,m2]=melRhythm(cyc), durs=m1.concat(m2), n=durs.length;
-  const steps=cyc===1?[[1,30],[-1,30],[2,10],[-2,10],[0,8],[4,4],[-4,4],[3,2],[-3,2]]:[[1,22],[-1,22],[2,12],[-2,12],[0,6],[3,6],[-3,6],[4,6],[-4,6],[5,2],[-5,2],[7,1],[-7,1]];
+  const cyc=CYCLE, mat=pickMat(cyc), M=MATS[mat], [ton,sig]=rnd(M.ton), cfg={mat,ton,sig,swing:Math.random()<M.sw};
+  const durs=melRhythm(cyc), n=durs.length, L=M.sc.length;
+  const steps=cyc===1?[[1,30],[-1,30],[2,10],[-2,10],[0,8],[3,3],[-3,3]]:[[1,22],[-1,22],[2,12],[-2,12],[0,6],[3,7],[-3,7],[4,4],[-4,4],[L,1],[-L,1]];
   const pick=()=>{ let r=Math.random()*steps.reduce((a,s)=>a+s[1],0); for(const [s,w] of steps){ r-=w; if(r<0) return s; } return 1; };
-  let degs=null;
-  for(let tries=0;tries<500&&!degs;tries++){
-    const d=[rnd([0,0,2,4])];
+  const notesOf=(ix,ds)=>ix.map((x,i)=>({n:melNote(cfg,x),d:ds[i]}));
+  const inRange=nn=>dpos(nn)>=26&&dpos(nn)<=40&&Math.abs(nn.a)<=1;
+  let ix=null;
+  for(let tries=0;tries<800&&!ix;tries++){
+    const d=[rnd([0,0,Math.round(L/2.5),L-2>0?2:1])];
     for(let i=1;i<n-2;i++) d.push(d[i-1]+pick());
-    d.push(rnd([1,-1])); d.push(0); // fin : sensible ou 2e degré, puis tonique
-    const okRange=d.every(x=>x>=-3&&x<=(cyc===1?7:9));
-    const okSteps=d.every((x,i)=>i===0||Math.abs(x-d[i-1])<=(cyc===1?4:7));
-    const okMinor=!MINOR(k)||d.every((x,i)=>((x%7)+7)%7!==6||i===n-2); // en mineur, la 7e seulement comme sensible avant la fin
-    const notes=d.map((x,i)=>melNote(k,x,i===n-2&&x===-1));
-    const okPitch=notes.every(nn=>dpos(nn)>=26&&dpos(nn)<=40);
-    if(okRange&&okSteps&&okMinor&&okPitch&&new Set(d).size>2) degs=d;
+    d.push(rnd(M.end)); d.push(0); // fin : note voisine de la tonique, puis tonique
+    const big=Math.abs(d[n-3]-d[n-2])>(cyc===1?3:L);
+    const car=!M.car||d.some(x=>M.car.includes(((x%L)+L)%L));
+    if(!big&&car&&new Set(d).size>2&&notesOf(d,durs).every(x=>inRange(x.n))) ix=d;
   }
-  const notesOf=(dg,ds)=>dg.map((x,i)=>({n:melNote(k,x,i===dg.length-2&&x===-1),d:ds[i]}));
-  const right=notesOf(degs,durs), key=m=>m.map(x=>pitch(x.n)+'/'+x.d).join(' ');
+  if(!ix) return melNew();
+  const right=notesOf(ix,durs), key=m=>m.map(x=>pitch(x.n)+'/'+x.d).join(' ');
   const wrong=[], seen=new Set([key(right)]);
-  const ord=i=>i===0?'1re':`${i+1}e`;
   for(const type of shuffle(['note','note','swap','rythme'])){
     if(wrong.length>=2) break;
     let m=null, why='';
-    if(type==='note'){ const i=Math.floor(Math.random()*(n-1)); const dg=degs.slice(); dg[i]+=rnd([1,-1,2,-2]); m=notesOf(dg,durs); if(dpos(m[i].n)<26||dpos(m[i].n)>40) continue; why=`la ${ord(i)} note est ${fr(m[i].n)} au lieu de ${fr(right[i].n)}`; }
-    else if(type==='swap'){ const c=[...Array(n-2).keys()].filter(i=>degs[i]!==degs[i+1]); if(!c.length) continue; const i=rnd(c); const dg=degs.slice(); [dg[i],dg[i+1]]=[dg[i+1],dg[i]]; m=notesOf(dg,durs); why=`les ${ord(i)} et ${ord(i+1)} notes sont inversées (${fr(right[i+1].n)} – ${fr(right[i].n)} au lieu de ${fr(right[i].n)} – ${fr(right[i+1].n)})`; }
-    else { const c=durs.map((x,i)=>x===2&&i<n-1?i:-1).filter(i=>i>=0); if(!c.length) continue; const i=rnd(c); const dg=degs.slice(0,i+1).concat(degs.slice(i)); const ds=durs.slice(0,i).concat([1,1]).concat(durs.slice(i+1)); m=notesOf(dg,ds); why=`la ${ord(i)} note est jouée deux fois en croches au lieu d'une noire`; }
+    if(type==='note'){ const i=Math.floor(Math.random()*(n-1)); const d=ix.slice(); d[i]+=rnd([1,-1,2,-2]); m=notesOf(d,durs); if(!inRange(m[i].n)) continue; why=`la ${ORD(i)} note est ${fr(m[i].n)} au lieu de ${fr(right[i].n)}`; }
+    else if(type==='swap'){ const c=[...Array(n-2).keys()].filter(i=>ix[i]!==ix[i+1]); if(!c.length) continue; const i=rnd(c); const d=ix.slice(); [d[i],d[i+1]]=[d[i+1],d[i]]; m=notesOf(d,durs); why=`les ${ORD(i)} et ${ORD(i+1)} notes sont inversées (${fr(right[i+1].n)} – ${fr(right[i].n)} au lieu de ${fr(right[i].n)} – ${fr(right[i+1].n)})`; }
+    else { const c=durs.map((x,i)=>x===2&&i<n-1?i:-1).filter(i=>i>=0); if(!c.length) continue; const i=rnd(c); const d=ix.slice(0,i+1).concat(ix.slice(i)); const ds=durs.slice(0,i).concat([1,1]).concat(durs.slice(i+1)); m=notesOf(d,ds); why=`la ${ORD(i)} note est jouée deux fois en croches au lieu d'une noire`; }
     if(!m||seen.has(key(m))) continue; seen.add(key(m)); wrong.push({m,why});
   }
   if(wrong.length<2) return melNew();
   const opts=shuffle([{m:right,why:null}].concat(wrong));
-  MEL={k,right,opts};
+  MEL={cfg,right,opts};
+  const modal=['dor','mixo','lyd','phr'].includes(mat);
   $('ivQ').textContent='Écoute la mélodie : quelle partition correspond ?';
   $('ivStaff').hidden=true;
-  $('ivMelKey').textContent=`Tonalité : ${k.replace(/m$/,'')} ${MINOR(k)?'mineur':'majeur'} · 2 mesures à 4/4 · on entend d'abord l'accord de la tonalité, puis 4 clics de décompte`;
-  $('ivOpts').innerHTML=`<div id="melOpts" style="display:grid;gap:10px;width:100%">${opts.map((o,j)=>`<button type="button" class="staffopt" data-j="${j}"><b>${'ABC'[j]}</b>${engraveMelody(o.m,k)}</button>`).join('')}</div>`;
+  $('ivMelKey').innerHTML=`<b>${M.lab(ton)}</b>${modal?` (mêmes notes que ${sig} majeur)`:''} · 2 mesures à 4/4${cfg.swing?' · <b>swing</b> (croches ternaires)':''} · on entend d'abord l'accord de référence, puis 4 clics de décompte`;
+  $('ivOpts').innerHTML=`<div id="melOpts" style="display:grid;gap:10px;width:100%">${opts.map((o,j)=>`<button type="button" class="staffopt" data-j="${j}"><b>${'ABC'[j]}</b>${engraveMelody(o.m,sig,cfg.swing)}</button>`).join('')}</div>`;
   $('ivOpts').querySelectorAll('button').forEach(b=>b.onclick=()=>{ const ok=answer($('ivOpts'),b,x=>!opts[+x.dataset.j].why,'mel');
-    fb('ivFb',ok,ok?'Exact !':'Non.',`La bonne partition est la <b>${'ABC'[opts.findIndex(o=>!o.why)]}</b> : ${right.map(x=>fr(x.n)).join(' – ')}.<ul style="margin:6px 0 0;padding-left:20px">${opts.map((o,j)=>o.why?`<li>Partition ${'ABC'[j]} : ${o.why}.</li>`:'').join('')}</ul>`); });
+    const carNote=M.car?` Note caractéristique de ce matériau : ${[...new Set(M.car.map(c=>fr(melNote(cfg,c))))].join(', ')}.`:'';
+    fb('ivFb',ok,ok?'Exact !':'Non.',`La bonne partition est la <b>${'ABC'[opts.findIndex(o=>!o.why)]}</b> : ${right.map(x=>fr(x.n)).join(' – ')}.${carNote}<ul style="margin:6px 0 0;padding-left:20px">${opts.map((o,j)=>o.why?`<li>Partition ${'ABC'[j]} : ${o.why}.</li>`:'').join('')}</ul>`); });
   melPlay();
 }
+const melRef=()=>({root:Object.assign({o:3},parseRoot(MEL.cfg.ton).n),q:MATS[MEL.cfg.mat].ch});
 async function melPlay(){ if(!MEL||MUTE) return; stopLoop(); const ac=await ready(); if(!ac) return;
-  const beat=60/MELBPM[MELT], t0=ac.currentTime+0.08;
-  const I=voiceProg([{root:Object.assign({o:3},parseRoot(MEL.k.replace(/m$/,'')).n),q:MINOR(MEL.k)?'m':''}])[0];
-  pianoNote(ac,I.bass,t0,1.3,0.7); I.notes.forEach(m=>pianoNote(ac,m,t0,1.3,0.55));
+  const beat=60/MELBPM[MELT], t0=ac.currentTime+0.08, sw=MEL.cfg.swing;
+  const I=voiceProg([melRef()])[0]; pianoNote(ac,I.bass,t0,1.3,0.7); I.notes.forEach(m=>pianoNote(ac,m,t0,1.3,0.55));
   const s=t0+1.8; for(let b=0;b<4;b++) hit(ac,'hp',s+b*beat,b===0?1:0.7);
-  let t=s+4*beat; MEL.right.forEach(x=>{ const d=x.d*beat/2; pianoNote(ac,pitch(x.n)+12*0,t,d*0.95,0.85); t+=d; });
+  const at=t=>s+4*beat+Math.floor(t/2)*beat+(t%2?(sw?2/3:1/2)*beat:0); // en swing, la 2e croche du temps arrive sur le dernier tiers
+  let t=0; MEL.right.forEach(x=>{ const a=at(t), b=at(t+x.d); pianoNote(ac,pitch(x.n),a,(b-a)*0.95,0.85); t+=x.d; });
 }
-function melTonic(){ if(!MEL) return; playProg([{root:Object.assign({o:3},parseRoot(MEL.k.replace(/m$/,'')).n),q:MINOR(MEL.k)?'m':''}],1.6); }
-// Gravure d'une mélodie (clé de sol, armure, 4/4, noires, croches, croche pointée, blanche)
-function engraveMelody(mel,k){
-  const top=50, Y=p=>top+4*SP-(p-BOT)*H, o=[], s=SIGN[k];
+function melTonic(){ if(MEL) playProg([melRef()],1.6); }
+// Gravure d'une mélodie (clé de sol, armure, 4/4, noires, croches, noire pointée, blanche)
+function engraveMelody(mel,sk,swing){
+  const top=56, Y=p=>top+4*SP-(p-BOT)*H, o=[], s=SIGN[sk];
   const sigW=Math.abs(s)*10, x0=58+sigW+28, ew=31, mw=8*ew+24, W=x0+2*mw+10, Ht=top+4*SP+52;
   for(let l=0;l<5;l++) o.push(`<line x1="10" y1="${top+l*SP}" x2="${W-8}" y2="${top+l*SP}" stroke="${INK}"/>`);
   o.push(glyph('treble',14,top+31,40));
   for(let i=0;i<Math.abs(s);i++){ const p=s>0?SH_POS[i]:FL_POS[i]; o.push(glyph(s>0?'sharp':'flat',50+i*10,Y(p)+(s>0?5:3),15)); }
   const tx=58+sigW+8; o.push(`<text x="${tx}" y="${top+19}" text-anchor="middle" font-family="${SANS}" font-weight="700" font-size="19" fill="${INK}">4</text><text x="${tx}" y="${top+39}" text-anchor="middle" font-family="${SANS}" font-weight="700" font-size="19" fill="${INK}">4</text>`);
+  if(swing) o.push(`<text x="${x0-4}" y="14" font-family="${SANS}" font-weight="700" font-style="italic" font-size="13" fill="${INK}">Swing</text>`);
   o.push(`<line x1="${x0+mw-12}" y1="${top}" x2="${x0+mw-12}" y2="${top+40}" stroke="${INK}"/>`);
   o.push(`<line x1="${W-14}" y1="${top}" x2="${W-14}" y2="${top+40}" stroke="${INK}"/><line x1="${W-10}" y1="${top}" x2="${W-10}" y2="${top+40}" stroke="${INK}" stroke-width="3.5"/>`);
   let t=0; const ev=mel.map(x=>{ const e={n:x.n,d:x.d,t,p:dpos(x.n)}; e.x=x0+(t>=8?mw:0)+(t%8)*ew+6; e.y=Y(e.p); t+=x.d; return e; });
-  // ligatures : deux croches sur un même temps
   const groups=[]; for(let i=0;i<ev.length;i++){ const e=ev[i]; if(e.d===1&&e.t%2===0&&ev[i+1]&&ev[i+1].d===1){ groups.push([e,ev[i+1]]); i++; } else groups.push([e]); }
+  // altérations : valables jusqu'à la barre de mesure
+  const cur={}; let bar=0;
+  ev.forEach(e=>{ if(e.t>=8&&!bar){ bar=1; for(const k in cur) delete cur[k]; } const kk=e.p, want=kk in cur?cur[kk]:sigAcc(sk,e.n.l); e.acc=e.n.a!==want?e.n.a:null; cur[kk]=e.n.a; });
   groups.forEach(g=>{
     const avg=g.reduce((a,e)=>a+e.p,0)/g.length, upS=avg<34;
     g.forEach(e=>{
@@ -755,8 +772,8 @@ function engraveMelody(mel,k){
       for(let q=BOT+10;q<=e.p;q+=2) o.push(`<line x1="${e.x-11}" y1="${Y(q)}" x2="${e.x+11}" y2="${Y(q)}" stroke="${INK}"/>`);
       const open=e.d>=4;
       o.push(`<ellipse cx="${e.x}" cy="${e.y}" rx="6.3" ry="4.4" ${open?`fill="none" stroke="${INK}" stroke-width="1.8"`:`fill="${INK}"`} transform="rotate(-20 ${e.x} ${e.y})"/>`);
-      if(e.d===3) o.push(`<circle cx="${e.x+11}" cy="${(e.p%2===0?e.y-3:e.y)}" r="1.9" fill="${INK}"/>`); // pointée (sur une ligne : le point monte dans l'interligne)
-      const want=sigAcc(k,e.n.l); if(e.n.a!==want){ if(e.n.a===1) o.push(glyph('sharp',e.x-19,e.y+5,15)); else if(e.n.a===-1) o.push(glyph('flat',e.x-18,e.y+3,15)); else o.push(`<path d="M${e.x-15} ${e.y-9}V${e.y+4}M${e.x-10} ${e.y-4}V${e.y+9}M${e.x-15} ${e.y-1}L${e.x-10} ${e.y-3}M${e.x-15} ${e.y+4}L${e.x-10} ${e.y+2}" stroke="${INK}" stroke-width="1.4"/>`); }
+      if(e.d===3) o.push(`<circle cx="${e.x+11}" cy="${(e.p%2===0?e.y-3:e.y)}" r="1.9" fill="${INK}"/>`);
+      if(e.acc!==null){ if(e.acc===1) o.push(glyph('sharp',e.x-19,e.y+5,15)); else if(e.acc===-1) o.push(glyph('flat',e.x-18,e.y+3,15)); else o.push(`<path d="M${e.x-15} ${e.y-9}V${e.y+4}M${e.x-10} ${e.y-4}V${e.y+9}M${e.x-15} ${e.y-1}L${e.x-10} ${e.y-3}M${e.x-15} ${e.y+4}L${e.x-10} ${e.y+2}" stroke="${INK}" stroke-width="1.4"/>`); }
     });
     if(g.length===2){
       const sx=e=>upS?e.x+5.6:e.x-5.6, by=upS?Math.min(g[0].y,g[1].y)-32:Math.max(g[0].y,g[1].y)+32;
