@@ -30,6 +30,7 @@ Merci ! Ce projet est fait par et pour des profs de musiques actuelles. **Pas be
 ```
 
 - `q` : la question ; `o` : 4 réponses ; `a` : numéro de la bonne réponse (0 = la première) ; `e` : l'explication affichée après la réponse.
+- Chaque série tire 20 questions au hasard dans la liste du cycle : tu peux en ajouter autant que tu veux.
 
 ### Question d'écoute (`LISTEN`)
 
@@ -57,6 +58,25 @@ Merci ! Ce projet est fait par et pour des profs de musiques actuelles. **Pas be
 ```
 
 - `ch` : les accords ; `d` : les degrés attendus, dans le même ordre. Les degrés doivent faire partie de la liste `ANAOPT` du cycle.
+
+### Grille à transposer (`TRANSPO`)
+
+```js
+{c:1, t:"La Bamba", a:"Ritchie Valens", k:'C', g:['C','F','G','F']},
+```
+
+- `k` : la tonalité dans laquelle la grille est notée (ajoute `m` pour une tonalité mineure : `'Am'`) ; `g` : les accords, un par case. L'atelier choisit lui-même la tonalité d'arrivée et fabrique les mauvaises réponses.
+
+### Groove de batterie (`GROOVES`)
+
+```js
+{id:'rock', name:'Rock / pop', c:1, n:16, hh:[0,2,4,6,8,10,12,14], sn:[4,12], bd:[0,8], opt:{bd:[6,10,14]},
+ e:"Grosse caisse sur 1 et 3, caisse claire sur 2 et 4…"},
+```
+
+- `n` : 16 cases (doubles croches, 0 = le 1, 1 = le « i », 2 = le « et », 3 = le « a », 4 = le 2…) ou 12 (triolets).
+- Éléments : `hh` charleston, `ho` charleston ouverte, `ride`, `sn` caisse claire, `gh` ghost note, `xs` cross-stick, `bd` grosse caisse, `hp` charleston au pied.
+- `opt` (facultatif) : coups ajoutés au hasard pour créer des variantes.
 
 ### Grille de morceau commentée (`SONGQ`)
 
