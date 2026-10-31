@@ -551,6 +551,10 @@ function loadSamples(){
   ]).then(()=>{SMP_DONE=true;});
   return SMP_P;
 }
+// Tous les sons passent par une « tranche » (BUS) : la couper arrête d'un coup tout ce qui était programmé
+let BUS=null;
+function bus(){ if(!BUS){ BUS=AC.createGain(); BUS.connect(MASTER); } return BUS; }
+function stopSound(){ if(BUS&&AC){ const g=BUS, t=AC.currentTime; try{ g.gain.cancelScheduledValues(t); g.gain.setValueAtTime(g.gain.value,t); g.gain.linearRampToValueAtTime(0,t+0.04); }catch(e){} setTimeout(()=>{ try{g.disconnect();}catch(e){} },150); } BUS=null; OPEN=null; }
 // À appeler avant chaque son : réveille le contexte audio (bloqué par le navigateur avant le 1er clic) et attend les fichiers.
 async function ready(){
   const ac=ctx(); if(!ac) return null;
@@ -563,22 +567,22 @@ async function ready(){
 const hzm=m=>440*Math.pow(2,(m-69)/12);
 function synthNote(ac,m,t,d,v){ const o=ac.createOscillator(), g=ac.createGain(); o.type='triangle'; o.frequency.value=hzm(m);
   g.gain.setValueAtTime(0,t); g.gain.linearRampToValueAtTime(0.2*v,t+0.02); g.gain.exponentialRampToValueAtTime(0.06*v,t+Math.min(0.5,d*0.6)); g.gain.linearRampToValueAtTime(0.0001,t+d);
-  o.connect(g); g.connect(MASTER); o.start(t); o.stop(t+d+0.05); }
+  o.connect(g); g.connect(bus()); o.start(t); o.stop(t+d+0.05); }
 function pianoNote(ac,m,t,d,v=0.8){
   let best=null,bd=99; PIANO.forEach(([,pm])=>{ if(SMP['p'+pm]){ const x=Math.abs(m-pm); if(x<bd){bd=x;best=pm;} } });
   if(best===null) return synthNote(ac,m,t,d,v);
   const s=SMP['p'+best], src=ac.createBufferSource(), g=ac.createGain();
   src.buffer=s.b; src.playbackRate.value=Math.pow(2,(m-best)/12);
   const end=t+d; g.gain.setValueAtTime(0.95*v,t); g.gain.setValueAtTime(0.95*v,end); g.gain.exponentialRampToValueAtTime(0.001,end+0.3);
-  src.connect(g); g.connect(MASTER); src.start(t,s.off); src.stop(end+0.35);
+  src.connect(g); g.connect(bus()); src.start(t,s.off); src.stop(end+0.35);
 }
 // list : [{n: note, ou m: MIDI, t: début (s), d: durée (s), v: force}]
-async function playNotes(list){ if(MUTE) return; const ac=await ready(); if(!ac) return; const t0=ac.currentTime+0.06;
+async function playNotes(list){ if(MUTE) return; stopSound(); const ac=await ready(); if(!ac) return; stopSound(); const t0=ac.currentTime+0.06;
   list.forEach(x=>pianoNote(ac,x.m!==undefined?x.m:pitch(x.n),t0+x.t,x.d,x.v||0.8)); }
 let NOISE=null;
 function noiseBuf(ac){if(NOISE) return NOISE; const b=ac.createBuffer(1,ac.sampleRate*0.5,ac.sampleRate); const d=b.getChannelData(0); for(let i=0;i<d.length;i++) d[i]=Math.random()*2-1; NOISE=b; return b;}
 function synthHit(ac,kind,t,vol){
-  const g=ac.createGain(); g.connect(MASTER);
+  const g=ac.createGain(); g.connect(bus());
   if(kind==='bd'){const o=ac.createOscillator(); o.frequency.setValueAtTime(130,t); o.frequency.exponentialRampToValueAtTime(45,t+0.12); g.gain.setValueAtTime(0.7*vol,t); g.gain.exponentialRampToValueAtTime(0.001,t+0.25); o.connect(g); o.start(t); o.stop(t+0.3); return;}
   if(kind==='cb'){const o=ac.createOscillator(); o.type='square'; o.frequency.value=800; g.gain.setValueAtTime(0.12*vol,t); g.gain.exponentialRampToValueAtTime(0.001,t+0.2); o.connect(g); o.start(t); o.stop(t+0.25); return;}
   const s=ac.createBufferSource(); s.buffer=noiseBuf(ac); const f=ac.createBiquadFilter(); s.connect(f); f.connect(g);
@@ -591,7 +595,7 @@ function hit(ac,kind,t,vol=1){
   if(kind==='hh'||kind==='hp'||kind==='hs'){ if(OPEN&&OPEN.t<t){ OPEN.g.gain.setTargetAtTime(0,t,0.012); OPEN=null; } }
   const s=SMP[kind]; if(!s) return synthHit(ac,kind,t,vol);
   const src=ac.createBufferSource(), g=ac.createGain(); src.buffer=s.b; g.gain.value=vol*(DRUMV[kind]||0.6);
-  src.connect(g); g.connect(MASTER); src.start(t,s.off);
+  src.connect(g); g.connect(bus()); src.start(t,s.off);
   if(kind==='ho') OPEN={g,t};
 }
 
@@ -638,6 +642,7 @@ let IVM='int', IVW='read', IVC=null;
 const ROOTS=['C','D','E','F','G','A','B'].map((_,l)=>({l,a:0,o:4})).concat([{l:6,a:-1,o:4},{l:2,a:-1,o:4},{l:3,a:1,o:4},{l:0,a:1,o:4}]);
 const QNAME={'':'majeur','m':'mineur','dim':'diminué','aug':'augmenté','sus4':'sus4','sus2':'sus2','Maj7':'Maj7','7':'7 (dominante)','m7':'m7','m7♭5':'m7♭5','dim7':'dim7','6':'6','m6':'m6','mMaj7':'mMaj7','7sus4':'7sus4'};
 function ivNew(){
+  stopLoop();
   const mel=IVM==='mel'; $('ivWay').hidden=mel; $('ivMelKey').hidden=!mel; $('ivMelRow').hidden=!mel; $('melLv').hidden=!mel; $('melLvTxt').hidden=!mel;
   if(mel){ lvlSeg('melLv','mel',ivNew); $('melLvTxt').textContent=MLV[CYCLE][getLv('mel')-1].t; }
   if(mel){ $('ivFb').hidden=true; $('ivPlay').hidden=false; return melNew(); }
@@ -847,12 +852,12 @@ function melHarmony(cfg,mel){
 }
 // Bourdon : tonique et quinte tenues, son de nappe (synthèse)
 function drone(ac,root,t,end){
-  const g=ac.createGain(), f=ac.createBiquadFilter(); f.type='lowpass'; f.frequency.value=650; f.Q.value=0.5; g.connect(MASTER); f.connect(g);
+  const g=ac.createGain(), f=ac.createBiquadFilter(); f.type='lowpass'; f.frequency.value=650; f.Q.value=0.5; g.connect(bus()); f.connect(g);
   g.gain.setValueAtTime(0.0001,t); g.gain.exponentialRampToValueAtTime(0.11,t+0.8); g.gain.setValueAtTime(0.11,end); g.gain.exponentialRampToValueAtTime(0.0001,end+1.2);
   [[0,-6],[0,6],[7,-4],[7,5],[12,0]].forEach(([iv,det],k)=>{ const o=ac.createOscillator(); o.type=k===4?'triangle':'sawtooth'; o.frequency.value=hzm(root+iv); o.detune.value=det; const og=ac.createGain(); og.gain.value=k===4?0.5:0.22; o.connect(og); og.connect(f); o.start(t); o.stop(end+1.3); });
 }
 const melRef=()=>({root:Object.assign({o:3},parseRoot(MEL.cfg.ton).n),q:MATS[MEL.cfg.mat].ch});
-async function melPlay(){ if(!MEL||MUTE) return; stopLoop(); const ac=await ready(); if(!ac) return;
+async function melPlay(){ if(!MEL||MUTE) return; stopLoop(); const ac=await ready(); if(!ac) return; stopSound();
   const c=MEL.cfg, bpm=c.meter==='12/8'?Math.round(MELBPM[MELT]*0.8):MELBPM[MELT], beat=60/bpm, t0=ac.currentTime+0.08, bpb=c.meter==='3/4'?3:4;
   const tonicM=pitch(Object.assign({o:2},parseRoot(c.ton).n));
   let s=t0;
@@ -866,7 +871,7 @@ async function melPlay(){ if(!MEL||MUTE) return; stopLoop(); const ac=await read
   if(MELREF==='drone') drone(ac,tonicM,t0,end);
   if(MELREF==='acc'){ const V=voiceProg(MEL.acc); MEL.acc.forEach((ch,i)=>{ const a=at(ch.t), e=at(ch.t+ch.d); pianoNote(ac,V[i].bass,a,(e-a)*0.95,0.42); V[i].notes.forEach(m=>pianoNote(ac,m-12>=48?m-12:m,a,(e-a)*0.95,0.3)); }); }
 }
-async function melRefPlay(){ if(!MEL) return; if(MELREF==='drone'){ const ac=await ready(); if(!ac) return; drone(ac,pitch(Object.assign({o:2},parseRoot(MEL.cfg.ton).n)),ac.currentTime+0.05,ac.currentTime+2.2); }
+async function melRefPlay(){ if(!MEL) return; if(MELREF==='drone'){ const ac=await ready(); if(!ac) return; stopLoop(); drone(ac,pitch(Object.assign({o:2},parseRoot(MEL.cfg.ton).n)),ac.currentTime+0.05,ac.currentTime+2.2); }
   else playProg([MELREF==='acc'?MEL.acc[0]:melRef()],1.6); }
 // Gravure d'une mélodie : clé de sol, armure, chiffrage, figures du débit de croches, doubles croches et triolets
 function melFig(d,meter){ if(meter==='12/8') return {4:{f:1},8:{},12:{dot:1},24:{open:1,dot:1}}[d]||{};
@@ -978,6 +983,7 @@ const okSpell=s=>!/(E♯|B♯|F♭|C♭|𝄪|𝄫)/.test(s);
 function degName(n,tonic){ const [st,se]=ivBetween(tonic,n); let d=se-MAJ[st][1]; if(d>6) d-=12; if(d<-6) d+=12; return (d===-1?'♭':d===1?'♯':'')+ROM[st]; }
 function degOf(sym,key){ const c=parseChord(sym), t=parseRoot(key).n; return degName(c.root,t)+c.q+(c.bass?'/'+degName(c.bass,t):''); }
 function dgNew(){
+  stopLoop();
   $('dgLv').hidden=DGM!=='dict'; if(DGM==='dict'){ lvlSeg('dgLv','dict',dgNew); }
   $('dgFb').hidden=true; $('dgBig').textContent=''; $('dgKey').textContent=''; $('dgGrid').hidden=true; $('dgPlayRow').hidden=true; $('dgOpts').innerHTML=''; DG=null;
   const keys=CYCLE===1?KEYS_C1:KEYS_C2;
@@ -1088,6 +1094,7 @@ let DGM='deg', DG=null;
 let RYM='count', RY=null, LOOP=null, LOOPID=0, CL=null, PG=null, GP=null;
 const RY_TXT={1:['Niveau 1 : noires et croches','Niveau 2 : doubles croches'],2:['Niveau 1 : toutes les figures en doubles croches','Niveau 2 : + triolets','Niveau 3 : + mesures à 3/4 et à 12/8']};
 function ryNew(){
+  stopLoop();
   $('ryFb').hidden=true; lvlSeg('ryLv','ry',ryNew); const lv=getLv('ry'); $('ryLvTxt').textContent=RY_TXT[CYCLE][lv-1];
   let meter='4/4', mk;
   const bin=CYCLE===1?(lv===1?['1000','1010']:CELLS_C1):CELLS_BIN;
@@ -1103,7 +1110,7 @@ function ryNew(){
   $('ryOpts').querySelectorAll('button').forEach(b=>b.onclick=()=>{const ok=answer($('ryOpts'),b,x=>x.dataset.v===right,'ry');
     fb('ryFb',ok,ok?'Exact !':'Non.',`On ne dit que les syllabes jouées. Binaire : 1 i et a ; ternaire (triolets, 12/8) : 1 ti ti.${meter==='12/8'?' En 12/8, chaque temps est une noire pointée, divisée en trois croches.':meter==='3/4'?' En 3/4, il y a trois temps par mesure.':''} Écoute la mesure en suivant les syllabes.`); ryPlay();});
 }
-async function ryPlay(){ if(!RY||!RY.cells) return; stopLoop(); const ac=await ready(); if(!ac) return; const beat=RY.meter==='12/8'?0.75:0.62, t0=ac.currentTime+0.12;
+async function ryPlay(){ if(!RY||!RY.cells) return; stopLoop(); const ac=await ready(); if(!ac) return; stopSound(); const beat=RY.meter==='12/8'?0.75:0.62, t0=ac.currentTime+0.12;
   RY.cells.forEach((c,b)=>{ hit(ac,'hp',t0+b*beat,0.9); [...c].forEach((x,i)=>{ if(x==='1') hit(ac,'cl',t0+b*beat+i*beat/c.length); }); }); }
 const ROWDEF=[['hh','Charleston','x'],['ho','Charleston ouverte','o'],['ride','Ride','x'],['sn','Caisse claire','●'],['gh','Ghost note','( )','ghost'],['xs','Cross-stick','⊗'],['bd','Grosse caisse','●'],['hp','Charleston (pied)','x']];
 const ELN={hh:'la charleston',ho:'la charleston ouverte',ride:'la ride',sn:'la caisse claire',gh:'la ghost note',xs:'le cross-stick',bd:'la grosse caisse',hp:'la charleston au pied'};
@@ -1135,7 +1142,7 @@ async function loop(n,step,onStep,cellsSel){ stopLoop(); const id=++LOOPID; cons
   const tick=()=>{ while(t<ac.currentTime+0.2){ onStep(ac,i%n,t); const cur=i%n; if(cells.length) setTimeout(()=>{ if(id===LOOPID) cells.forEach(c=>c.classList.toggle('cur',+c.dataset.i===cur));},Math.max(0,(t-ac.currentTime)*1000)); t+=step; i++; } };
   tick(); LOOP=setInterval(tick,40);
 }
-function stopLoop(){ LOOPID++; if(LOOP){clearInterval(LOOP);LOOP=null;} document.querySelectorAll('.grid .cur').forEach(c=>c.classList.remove('cur')); }
+function stopLoop(){ LOOPID++; stopSound(); if(LOOP){clearInterval(LOOP);LOOP=null;} document.querySelectorAll('.grid .cur').forEach(c=>c.classList.remove('cur')); }
 const grooveBpm=g=>['blast','skank','dbl'].includes(g.id)?150:g.id==='swing'?130:['onedrop','steppers','rockers'].includes(g.id)?76:g.id==='shuffle'?100:g.id==='disco'?116:96;
 function playGroove(g,sel){ const n=g.n, per=n/4;
   loop(n,60/grooveBpm(g)/per,(ac,i,t)=>ELS.forEach(k=>{ if(g[k]&&g[k].includes(i)){ const acc=k==='hh'&&n===16?(i%4===0?1:i%2===0?0.8:0.6):1; hit(ac,k,t,acc); } }),sel); }
