@@ -1,5 +1,5 @@
 // =====================================================================
-//  Atelier de FM — contenu pédagogique
+//  Atelier FM, musiques actuelles et jazz — contenu pédagogique
 //  Licence : CC BY-SA 4.0 (voir LICENCE-CONTENU.md). Pour contribuer : CONTRIBUER.md
 //  Règles d'écriture : notes seules en solfège (Do, Ré, Mi…), accords et tonalités
 //  en lettres (C, Am7, « en G »), intervalles notés ♭2, 2, ♭3, 3, 4, ♯4, ♭5, 5…

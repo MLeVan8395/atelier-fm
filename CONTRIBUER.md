@@ -1,4 +1,4 @@
-# Contribuer à l'Atelier de FM
+# Contribuer à l'Atelier FM
 
 Merci ! Ce projet est fait par et pour des profs de musiques actuelles. **Pas besoin d'être développeur** pour proposer du contenu.
 

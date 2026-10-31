@@ -11,7 +11,7 @@ Tu peux :
 - **adapter** : le modifier, le transformer, l'enrichir, y compris pour tes propres cours.
 
 À condition de :
-- **citer** l'auteur (« Atelier de FM, Mickael Le Van et contributeurs ») et indiquer si des modifications ont été faites ;
+- **citer** l'auteur (« Atelier FM, musiques actuelles et jazz, Mickael Le Van et contributeurs ») et indiquer si des modifications ont été faites ;
 - **partager dans les mêmes conditions** : si tu publies une version modifiée, elle doit être sous la même licence.
 
 Texte complet de la licence : https://creativecommons.org/licenses/by-sa/4.0/legalcode.fr

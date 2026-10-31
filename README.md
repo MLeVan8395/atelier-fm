@@ -1,4 +1,4 @@
-# Atelier de FM — Musiques actuelles & jazz
+# Atelier FM — Musiques actuelles et jazz
 
 Un atelier en ligne, libre et gratuit, pour travailler la formation musicale en **musiques actuelles et jazz** : quiz de cours, lecture et oreille, degrés et grilles, rythme et batterie, écoute de morceaux.
 
