@@ -4,6 +4,11 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Atelier de FM</title>
+<meta name="description" content="Quiz et exercices de formation musicale en musiques actuelles et jazz, cycles 1 et 2.">
+<meta name="theme-color" content="#19202a">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icones/icone-192.png">
+<link rel="apple-touch-icon" href="icones/apple-touch-icon.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Bodoni+Moda:ital,opsz,wght@0,6..96,500;0,6..96,700;1,6..96,500&family=Atkinson+Hyperlegible:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
@@ -138,6 +143,7 @@ button.chordopt{font-family:var(--chord);font-weight:700;font-size:1.05rem}
         <button type="button" id="c1" aria-pressed="false">Cycle 1</button>
         <button type="button" id="c2" aria-pressed="true">Cycle 2</button>
       </div>
+      <button type="button" id="install" class="primary" hidden>Installer l'appli</button>
       <button type="button" id="theme" class="ghost">☀ Clair</button>
       <span class="meta" id="snd" hidden>Chargement des sons…</span>
       <div class="score" id="globalScore">Réponses justes : <b>0</b> sur <b>0</b></div>
@@ -1016,6 +1022,12 @@ function start(){
   $('stNext').onclick=()=>{STQ.i++;stShow();};
   setCycle(CYCLE); route(); window.addEventListener('hashchange',route);
   loadSamples();
+  // Appli installable (PWA) : fonctionnement hors ligne et bouton « Installer l'appli » quand le navigateur le propose
+  try{ if('serviceWorker' in navigator&&/^https?:$/.test(location.protocol)) navigator.serviceWorker.register('sw.js').catch(()=>{}); }catch(e){}
+  let ask=null;
+  window.addEventListener('beforeinstallprompt',e=>{ e.preventDefault(); ask=e; $('install').hidden=false; });
+  $('install').onclick=async()=>{ if(!ask) return; ask.prompt(); try{ await ask.userChoice; }catch(e){} ask=null; $('install').hidden=true; };
+  window.addEventListener('appinstalled',()=>{ $('install').hidden=true; });
 }
 start();
 </script>

@@ -6,6 +6,16 @@ Il a été conçu pour les cours de FM des **cycles 1 et 2** de conservatoire, m
 
 👉 **Utiliser l'atelier :** https://mlevan8395.github.io/atelier-fm/
 
+## Installer l'appli sur un téléphone ou un ordinateur
+
+L'atelier s'installe comme une application, gratuitement et sans passer par une boutique :
+
+- **Android** (Chrome) : ouvre le site, puis touche le bouton **Installer l'appli** en haut de la page, ou menu ⋮ → **Installer l'application**.
+- **iPhone / iPad** (Safari) : bouton Partager → **Sur l'écran d'accueil**.
+- **Ordinateur** (Chrome, Edge) : icône d'installation dans la barre d'adresse.
+
+L'appli fonctionne ensuite **hors ligne**, sons compris (seuls les liens YouTube demandent une connexion). Elle se met à jour toute seule à chaque ouverture avec une connexion : une modification faite sur GitHub arrive chez les élèves sans rien réinstaller.
+
 ## Ce qu'on y trouve
 
 | Onglet | Exercices |

@@ -1,0 +1,18 @@
+{
+  "name": "Atelier de FM — Musiques actuelles & jazz",
+  "short_name": "Atelier FM",
+  "description": "Quiz et exercices de formation musicale en musiques actuelles et jazz, cycles 1 et 2.",
+  "lang": "fr",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#10151c",
+  "theme_color": "#19202a",
+  "categories": ["education", "music"],
+  "icons": [
+    {"src": "icones/icone-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any"},
+    {"src": "icones/icone-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any"},
+    {"src": "icones/icone-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable"}
+  ]
+}
