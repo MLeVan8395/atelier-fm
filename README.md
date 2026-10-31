@@ -4,7 +4,7 @@ Un atelier en ligne, libre et gratuit, pour travailler la formation musicale en 
 
 Il a été conçu pour les cours de FM des **cycles 1 et 2** de conservatoire, mais il sert à tout élève ou enseignant de musiques actuelles.
 
-👉 **Utiliser l'atelier :** *(adresse du site une fois en ligne)*
+👉 **Utiliser l'atelier :** https://mlevan8395.github.io/atelier-fm/
 
 ## Ce qu'on y trouve
 
