@@ -189,6 +189,7 @@ button.chordopt{font-family:var(--chord);font-weight:700;font-size:1.05rem}
   <div class="card stack">
     <div class="qtext" id="ivQ" style="margin:0"></div>
     <div class="staffwrap" id="ivStaff"></div>
+    <div class="sub" role="group" aria-label="Niveau" id="chLv" hidden style="margin:0"></div>
     <div class="sub" role="group" aria-label="Niveau" id="melLv" hidden style="margin:0"></div>
     <div class="meta" id="melLvTxt" hidden></div>
     <div class="meta" id="ivMelKey" hidden></div>
@@ -342,6 +343,7 @@ const CH={
 };
 const CH_C1=['','m','5']; // cycle 1 : majeur, mineur, power chord
 const CH_C2=['','m','dim','aug','sus4','Maj7','7','m7','m7♭5','dim7','6','m6','mMaj7','7sus4'];
+const CH_LV2=[['','m','dim','aug','sus4','sus2'],['Maj7','7','m7','m7♭5','dim7','6','m6','mMaj7','7sus4']]; // cycle 2 : niveau 1 triades, niveau 2 accords à 4 sons
 const chordNotes=(root,q)=>CH[q][0].map(([s,t])=>up(root,s,t));
 // Tonalités majeures
 const KEYROOTS={C:{l:0,a:0},G:{l:4,a:0},D:{l:1,a:0},A:{l:5,a:0},E:{l:2,a:0},F:{l:3,a:0},'B♭':{l:6,a:-1},'E♭':{l:2,a:-1}};
@@ -646,6 +648,7 @@ function ivNew(){
   stopLoop();
   const mel=IVM==='mel'; $('ivWay').hidden=mel; $('ivMelKey').hidden=!mel; $('ivMelRow').hidden=!mel; $('melLv').hidden=!mel; $('melLvTxt').hidden=!mel;
   if(mel){ lvlSeg('melLv','mel',ivNew); $('melLvTxt').textContent=MLV[CYCLE][getLv('mel')-1].t; }
+  const chl=IVM==='chord'&&CYCLE===2; $('chLv').hidden=!chl; if(chl) lvlSeg('chLv','ch',ivNew);
   if(mel){ $('ivFb').hidden=true; $('ivPlay').hidden=false; return melNew(); }
   const ear=IVW==='ear';
   $('ivFb').hidden=true; $('ivPlay').hidden=!ear; $('ivStaff').hidden=ear;
@@ -666,7 +669,7 @@ function ivNew(){
       if(ear) $('ivStaff').hidden=false;
     });
   } else {
-    const set=CYCLE===1?CH_C1:CH_C2; let root,q,notes;
+    const set=CYCLE===1?CH_C1:CH_LV2[getLv('ch')-1]; let root,q,notes;
     do{ q=rnd(set); root=Object.assign({},rnd(CYCLE===1?ROOTS.slice(0,9):ROOTS)); notes=chordNotes(root,q); } while(notes.some(n=>Math.abs(n.a)>1)||dpos(notes[notes.length-1])>dpos({l:2,o:5}));
     IVC={kind:'chord',root,q,notes};
     $('ivStaff').innerHTML=engraveCols([{notes}],{colW:170,aria:'Accord'});
@@ -725,10 +728,11 @@ const ORD=i=>i===0?'1re':`${i+1}e`;
 const wpick=obj=>{ const e=Object.entries(obj); let r=Math.random()*e.reduce((a,x)=>a+x[1],0); for(const [k,w] of e){ r-=w; if(r<0) return k; } return e[0][0]; };
 // Niveaux choisis par l'élève, par exercice et par cycle
 let LVL={}; try{ LVL=JSON.parse(localStorage.getItem('atelier-fm-niveaux')||'{}')||{}; }catch(e){}
-const LVMAX={mel:{1:2,2:3},dict:{1:2,2:3},ry:{1:2,2:3}};
+const LVMAX={mel:{1:2,2:3},dict:{1:2,2:3},ry:{1:2,2:3},ch:{1:1,2:2}};
 const getLv=ex=>Math.min(LVL[ex+CYCLE]||1,LVMAX[ex][CYCLE]);
+const LVNAMES={ch:['Niveau 1 : accords à 3 sons','Niveau 2 : accords à 4 sons']};
 function lvlSeg(id,ex,onChange){ const el=$(id), m=LVMAX[ex][CYCLE], cur=getLv(ex);
-  el.innerHTML=[...Array(m).keys()].map(i=>`<button type="button" data-l="${i+1}" aria-pressed="${i+1===cur}">Niveau ${i+1}</button>`).join('');
+  el.innerHTML=[...Array(m).keys()].map(i=>`<button type="button" data-l="${i+1}" aria-pressed="${i+1===cur}">${(LVNAMES[ex]&&LVNAMES[ex][i])||'Niveau '+(i+1)}</button>`).join('');
   el.querySelectorAll('button').forEach(b=>b.onclick=()=>{ LVL[ex+CYCLE]=+b.dataset.l; try{localStorage.setItem('atelier-fm-niveaux',JSON.stringify(LVL));}catch(e){} lvlSeg(id,ex,onChange); onChange(); }); }
 // indice dans la gamme (0 = tonique ; négatif = en dessous) → note
 function melNote(cfg,i){ const sc=MATS[cfg.mat].sc, L=sc.length, oc=Math.floor(i/L), [st,se]=sc[((i%L)+L)%L];
