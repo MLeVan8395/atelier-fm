@@ -18,4 +18,4 @@ Texte complet de la licence : https://creativecommons.org/licenses/by-sa/4.0/leg
 
 ## Morceaux cités
 
-Les titres de morceaux et noms d'artistes sont cités à des fins pédagogiques. Aucun enregistrement n'est inclus dans le projet : les liens ouvrent une recherche sur YouTube. Les œuvres restent la propriété de leurs ayants droit.
+Les titres de morceaux et noms d'artistes sont cités à des fins pédagogiques. Aucun enregistrement n'est inclus dans le projet : les liens renvoient vers des vidéos publiées sur YouTube. Les œuvres restent la propriété de leurs ayants droit.

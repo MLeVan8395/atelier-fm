@@ -14,7 +14,7 @@ Il a été conçu pour les cours de FM des **cycles 1 et 2** de conservatoire, m
 | **Intervalles et accords** | Reconnaissance **à la lecture** (portée seule) ou **à l'oreille** (son seul), jamais les deux en même temps |
 | **Degrés et grilles** | Degrés, cadences, dictée de degrés à l'oreille, analyse d'un bout de grille, grilles de vrais morceaux |
 | **Rythme et batterie** | Compter une mesure (1 i et a, 1 ti ti), reconnaître un groove de batterie, reconnaître une clave |
-| **Écoute** | Morceaux à écouter (lien YouTube) : style, instrument, son de guitare, clavier, effet, placement rythmique, type de chant |
+| **Écoute** | Morceaux à écouter (lien direct vers la vidéo YouTube, officielle quand elle existe) : style, instrument, son de guitare, clavier, effet, placement rythmique, type de chant |
 
 Un bouton **Cycle 1 / Cycle 2** adapte toutes les questions au niveau.
 
@@ -23,7 +23,7 @@ Un bouton **Cycle 1 / Cycle 2** adapte toutes les questions au niveau.
 - **Aucune donnée collectée.** Les scores restent dans le navigateur de l'élève. Pas de compte, pas de publicité, pas de cookie de suivi.
 - **Rien à installer.** Une seule page web, qui fonctionne aussi hors ligne (ouvrir `index.html`).
 - **Conventions de notation françaises** : notes seules en Do, Ré, Mi… ; accords et tonalités en lettres (C, Am7, « en G ») ; intervalles notés ♭2, 2, ♭3, 3…
-- **Pas d'extrait audio protégé** : les morceaux sont cités, et un lien ouvre une recherche YouTube. Les sons des exercices (accords, batterie, claves) sont synthétisés par la page.
+- **Pas d'extrait audio protégé** : les morceaux sont cités, et un lien ouvre la vidéo sur YouTube (version officielle ou chaîne de l'artiste quand elle existe). Les sons des exercices (accords, batterie, claves) sont synthétisés par la page.
 
 ## Contribuer
 

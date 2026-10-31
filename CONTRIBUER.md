@@ -15,7 +15,7 @@ Merci ! Ce projet est fait par et pour des profs de musiques actuelles. **Pas be
 - **Intervalles** : ♭2, 2, ♭3, 3, 4, ♯4, ♭5, 5, ♭6, 6, ♭7, 7, 8.
 - **Altérations** : utiliser les vrais signes ♯ et ♭ (copier-coller depuis ce fichier).
 - **Tutoiement** de l'élève, phrases courtes, vocabulaire adapté à des collégiens.
-- **Morceaux** : titre exact et artiste, pour que la recherche YouTube tombe juste. Vérifie à l'écoute ce que tu affirmes (instrument, effet, tonalité, accords).
+- **Morceaux** : titre exact et artiste. Ajoute l'identifiant de la vidéo YouTube dans la liste `YT` (les 11 caractères après `watch?v=`), en choisissant la version officielle ou celle de la chaîne de l'artiste. Sans identifiant, le lien ouvre une recherche YouTube. Vérifie à l'écoute ce que tu affirmes (instrument, effet, tonalité, accords).
 - **Niveau** : `c:1` si la question convient dès le cycle 1, `c:2` si elle est réservée au cycle 2.
 
 ## Modèles
