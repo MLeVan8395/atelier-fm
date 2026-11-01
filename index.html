@@ -397,6 +397,24 @@ const CH_LV1=[['','m','5'],['','m','5','7']]; // cycle 1 : niveau 2 avec l'accor
 const CH_C2=['','m','dim','aug','sus4','Maj7','7','m7','m7♭5','dim7','6','m6','mMaj7','7sus4'];
 const CH_LV2=[['','m','dim','aug','sus4','sus2'],['Maj7','7','m7','m7♭5','dim7','6','m6','mMaj7','7sus4']]; // cycle 2 : niveau 1 triades, niveau 2 accords à 4 sons
 const chordNotes=(root,q)=>CH[q][0].map(([s,t])=>up(root,s,t));
+// Niveau 3 : accords sur basse. tone = note de l'accord à la basse ; sinon [degrés, demi-tons] au-dessus de la fondamentale.
+// lab = bouton à l'oreille ; heard(nom de la fondamentale, nom de la basse, nature) = ce qu'on entend vraiment
+const SL={
+ r: {tone:0,lab:'Fondamentale à la basse',ex:()=>'La basse est la fondamentale : accord à l\'état fondamental.'},
+ t: {tone:1,lab:'1er renversement (tierce à la basse)',ex:()=>'La tierce est à la basse : premier renversement. Son plus léger, idéal pour une ligne de basse qui monte ou descend par degrés conjoints.'},
+ q: {tone:2,lab:'2e renversement (quinte à la basse)',ex:()=>'La quinte est à la basse : deuxième renversement. Son instable, souvent utilisé en passage ou juste avant une cadence.'},
+ b7:{st:6,s:10,lab:'Basse étrangère un ton sous la fondamentale (type D/C)',ex:(R,B,q)=>`La basse n'est pas dans l'accord : elle est un ton sous la fondamentale. On entend un ${R}${q==='m'?'m7':'7'} avec la 7e à la basse${q===''?' (couleur lydienne, très utilisée en pop et en musique de film)':''}.`},
+ n9:{st:1,s:2,lab:'Basse étrangère un ton au-dessus de la fondamentale (type F/G)',ex:(R,B)=>`La basse n'est pas dans l'accord : elle est un ton au-dessus de la fondamentale. On entend un ${B}9sus4 (ou ${B}11) : une dominante suspendue, sans tierce, typique de la soul, du gospel et de la pop.`},
+ s6:{st:5,s:9,lab:'Basse étrangère une tierce mineure sous la fondamentale (type C/A)',ex:(R,B,q)=>`La basse n'est pas dans l'accord : elle est une tierce mineure sous la fondamentale. On entend un ${B}${q==='m'?'m7♭5':'m7'} : l'accord de départ forme le haut de cet accord à 4 sons.`},
+ f4:{st:3,s:5,lab:'Basse étrangère une quinte sous la fondamentale (type C/F)',ex:(R,B,q)=>`La basse n'est pas dans l'accord : elle est une quinte sous la fondamentale. On entend un ${B}${q==='m'?'9 sans tierce (couleur sus)':'Maj9 sans tierce'} : son ouvert et moderne.`},
+ m7:{st:6,s:11,lab:'Basse étrangère un demi-ton sous la fondamentale (type C/B)',ex:(R)=>`La basse n'est pas dans l'accord : elle est un demi-ton sous la fondamentale. On entend un ${R}Maj7 avec la 7e à la basse : souvent une basse de passage qui descend (C – C/B – Am).`},
+};
+// par cycle : natures d'accord et basses possibles (les basses non jouables sur une nature sont écartées)
+const SL_LV={1:{q:['','m'],b:['r','t','q','b7','n9']},2:{q:['','m'],b:['r','t','q','b7','n9','s6','f4','m7']}};
+const SL_NOT={m:['n9','m7']};
+function slashBass(root,q,k){ const sl=SL[k], ns=chordNotes(root,q); let b=sl.tone!==undefined?Object.assign({},ns[sl.tone]):up(root,sl.st,sl.s);
+  b=Object.assign({},b,{o:3}); while(dpos(b)>27) b.o--; while(dpos(b)<17) b.o++; return b; }
+
 // Tonalités majeures
 const KEYROOTS={C:{l:0,a:0},G:{l:4,a:0},D:{l:1,a:0},A:{l:5,a:0},E:{l:2,a:0},F:{l:3,a:0},'B♭':{l:6,a:-1},'E♭':{l:2,a:-1}};
 const KEYS_C1=['C','G','D','F'];
@@ -466,6 +484,30 @@ function engraveCols(cols,opt={}){
     if(col.label) o.push(`<text x="${x0}" y="${top+4*SP+44}" text-anchor="middle" font-family="${SANS}" font-size="13" font-weight="700" ${col.ok?'style="fill:var(--green)"':col.cur?'style="fill:var(--accent)"':MUTED}>${col.label}</text>`);
   });
   return `<svg xmlns="http://www.w3.org/2000/svg" style="width:100%;height:auto;max-width:${Math.round(W*1.7)}px" viewBox="0 0 ${W} ${Ht}" role="img" aria-label="${opt.aria||'Portée'}">${o.join('')}</svg>`;
+}
+
+// ---- Gravure : grand-portée (accord en clé de sol, basse en clé de fa), une colonne ----
+function engraveGrand(notes,bass){
+  const left=78, colW=170, top=40, gap=7*SP, W=left+colW+20, topB=top+4*SP+gap, Ht=topB+4*SP+40, x0=left+colW/2, o=[];
+  for(let l=0;l<5;l++){ o.push(`<line x1="12" y1="${top+l*SP}" x2="${W-10}" y2="${top+l*SP}" stroke="${INK}"/>`); o.push(`<line x1="12" y1="${topB+l*SP}" x2="${W-10}" y2="${topB+l*SP}" stroke="${INK}"/>`); }
+  o.push(`<line x1="12" y1="${top}" x2="12" y2="${topB+4*SP}" stroke="${INK}" stroke-width="1.5"/>`);
+  [W-14,W-10].forEach((x,i)=>o.push(`<line x1="${x}" y1="${top}" x2="${x}" y2="${topB+4*SP}" stroke="${INK}" stroke-width="${i?3.5:1}"/>`));
+  o.push(glyph('treble',18,top+31,40));
+  const yF=topB+SP; // clé de fa : 2e ligne en partant du haut
+  o.push(`<circle cx="24" cy="${yF}" r="3.6" fill="${INK}"/><path d="M22 ${yF} C22 ${yF-13} 46 ${yF-13} 46 ${yF+3} C46 ${yF+17} 33 ${yF+26} 20 ${yF+31}" fill="none" stroke="${INK}" stroke-width="2.8" stroke-linecap="round"/><circle cx="53" cy="${yF-5}" r="2.2" fill="${INK}"/><circle cx="53" cy="${yF+5}" r="2.2" fill="${INK}"/>`);
+  const head=(p,y0,base,n)=>{ const y=y0+4*SP-(p-base)*H;
+    for(let q=base-2;q>=p;q-=2){const yy=y0+4*SP-(q-base)*H;o.push(`<line x1="${x0-12}" y1="${yy}" x2="${x0+12}" y2="${yy}" stroke="${INK}"/>`);}
+    for(let q=base+10;q<=p;q+=2){const yy=y0+4*SP-(q-base)*H;o.push(`<line x1="${x0-12}" y1="${yy}" x2="${x0+12}" y2="${yy}" stroke="${INK}"/>`);}
+    return y; };
+  let prevP=null, prevShift=false; const accCols=[];
+  notes.slice().sort((a,b)=>dpos(a)-dpos(b)).forEach(n=>{ const p=dpos(n), y=head(p,top,BOT,n);
+    let shift=false; if(prevP!==null&&p-prevP===1&&!prevShift) shift=true; prevShift=shift; prevP=p; const x=x0+(shift?13:0);
+    o.push(`<ellipse cx="${x}" cy="${y}" rx="7" ry="4.6" fill="none" stroke="${INK}" stroke-width="2.6" transform="rotate(-15 ${x} ${y})"/>`);
+    if(n.a){ let c=0; while(accCols.some(a=>a.c===c&&Math.abs(a.p-p)<6)) c++; accCols.push({c,p}); o.push(glyph(n.a===1?'sharp':'flat',x0-20-c*11,y+(n.a===-1?3:5),15)); } });
+  const yb=head(dpos(bass),topB,18,bass); // clé de fa : Sol2 sur la ligne du bas
+  o.push(`<ellipse cx="${x0}" cy="${yb}" rx="7" ry="4.6" fill="none" stroke="${INK}" stroke-width="2.6" transform="rotate(-15 ${x0} ${yb})"/>`);
+  if(bass.a) o.push(glyph(bass.a===1?'sharp':'flat',x0-20,yb+(bass.a===-1?3:5),15));
+  return `<svg xmlns="http://www.w3.org/2000/svg" style="width:100%;height:auto;max-width:${Math.round(W*1.7)}px" viewBox="0 0 ${W} ${Ht}" role="img" aria-label="Accord sur basse, grand-portée">${o.join('')}</svg>`;
 }
 
 // ---- Gravure : une mesure de rythme sur une ligne (4/4, 3/4, 12/8 ; cellules binaires de 4 cases ou ternaires de 3) ----
@@ -723,6 +765,27 @@ function ivNew(){
       fb('ivFb',ok,ok?'Exact !':'Non.',`${pair} : <b>${lab}</b>, ${IVNAME[lab]} (${pitch(hi)-pitch(lo)} demi-tons).${rep&&dir!=='harm'?` Repère ${dir==='desc'?'descendant':'ascendant'} : ${rep}.`:''}${num<8?` Renversé, il devient une ${['','','seconde','tierce','quarte','quinte','sixte','septième'][inv]} (règle des 9 : ${num} + ${inv} = 9).`:''}${ear?' La portée est affichée ci-dessus.':''}`);
       if(ear) $('ivStaff').hidden=false;
     });
+  } else if(getLv('ch')===3){
+    const L=SL_LV[CYCLE]; let root,q,k,notes,bass;
+    do{ k=rnd(L.b); q=rnd(L.q.filter(x=>!(SL_NOT[x]||[]).includes(k))); root=Object.assign({},rnd(CYCLE===1?ROOTS.slice(0,9):ROOTS)); notes=chordNotes(root,q); bass=slashBass(root,q,k); }
+    while(notes.some(n=>Math.abs(n.a)>1)||Math.abs(bass.a)>1||dpos(notes[notes.length-1])>dpos({l:2,o:5}));
+    const nm=x=>en(root)+q+(x==='r'?'':'/'+en(slashBass(root,q,x)));
+    IVC={kind:'slash',root,q,k,notes,bass};
+    $('ivStaff').innerHTML=engraveGrand(notes,bass);
+    const pool=L.b.filter(x=>!(SL_NOT[q]||[]).includes(x)&&x!==k&&Math.abs(slashBass(root,q,x).a)<=1);
+    const opts=shuffle(shuffle(pool).slice(0,CYCLE===1?3:4).concat([k]));
+    if(ear){
+      $('ivQ').textContent='Écoute la basse puis l\'accord : quelle est la note à la basse ?';
+      $('ivOpts').innerHTML=opts.map(v=>`<button type="button" class="choice" data-v="${v}">${SL[v].lab}</button>`).join('');
+    } else {
+      $('ivQ').textContent='Lis les deux portées (accord en clé de sol, basse en clé de fa). Quel est cet accord ?';
+      $('ivOpts').innerHTML=opts.map(v=>`<button type="button" class="choice" data-v="${v}">${nm(v)}</button>`).join('');
+    }
+    $('ivOpts').querySelectorAll('button').forEach(b=>b.onclick=()=>{
+      const ok=answer($('ivOpts'),b,x=>x.dataset.v===k,'iv'+IVW);
+      fb('ivFb',ok,ok?'Exact !':'Non.',`<b>${nm(k)}</b> : accord de ${en(root)}${q} (${notes.map(fr).join(' – ')}) sur la basse ${fr(bass)}. ${SL[k].ex(en(root),en(bass),q)}${ear?' La portée est affichée ci-dessus.':''}`);
+      if(ear) $('ivStaff').hidden=false;
+    });
   } else {
     const set=(CYCLE===1?CH_LV1:CH_LV2)[getLv('ch')-1]; let root,q,notes;
     do{ q=rnd(set); root=Object.assign({},rnd(CYCLE===1?ROOTS.slice(0,9):ROOTS)); notes=chordNotes(root,q); } while(notes.some(n=>Math.abs(n.a)>1)||dpos(notes[notes.length-1])>dpos({l:2,o:5}));
@@ -746,6 +809,7 @@ function ivNew(){
 }
 function ivPlay(){ if(IVM==='mel') return melPlay(); if(!IVC||IVW!=='ear') return;
   if(IVC.kind==='int'){ if(IVC.harm) playNotes([{n:IVC.lo,t:0,d:1.6},{n:IVC.hi,t:0,d:1.6}]); else { const [a,b]=IVC.dir==='desc'?[IVC.hi,IVC.lo]:[IVC.lo,IVC.hi]; playNotes([{n:a,t:0,d:0.9},{n:b,t:0.95,d:1.3}]); } }
+  else if(IVC.kind==='slash'){ const n=IVC.notes.length, L=[{n:IVC.bass,t:0,d:1.2}]; IVC.notes.forEach((x,i)=>L.push({n:x,t:1.3+i*0.3,d:0.55})); const t2=1.3+n*0.3+0.3; L.push({n:IVC.bass,t:t2,d:2}); IVC.notes.forEach(x=>L.push({n:x,t:t2,d:2})); playNotes(L); }
   else { const L=IVC.notes.map((n,i)=>({n,t:i*0.35,d:0.6})); IVC.notes.forEach(n=>L.push({n,t:IVC.notes.length*0.35+0.25,d:1.8})); playNotes(L); }
 }
 
@@ -783,9 +847,9 @@ const ORD=i=>i===0?'1re':`${i+1}e`;
 const wpick=obj=>{ const e=Object.entries(obj); let r=Math.random()*e.reduce((a,x)=>a+x[1],0); for(const [k,w] of e){ r-=w; if(r<0) return k; } return e[0][0]; };
 // Niveaux choisis par l'élève, par exercice et par cycle
 let LVL={}; try{ LVL=JSON.parse(localStorage.getItem('atelier-fm-niveaux')||'{}')||{}; }catch(e){}
-const LVMAX={mel:{1:2,2:3},dict:{1:2,2:3},ry:{1:2,2:3},ch:{1:2,2:2}};
+const LVMAX={mel:{1:2,2:3},dict:{1:2,2:3},ry:{1:2,2:3},ch:{1:3,2:3}};
 const getLv=ex=>Math.min(LVL[ex+CYCLE]||1,LVMAX[ex][CYCLE]);
-const LVNAMES={ch:{1:['Niveau 1 : majeur, mineur, power chord','Niveau 2 : + accord 7'],2:['Niveau 1 : accords à 3 sons','Niveau 2 : accords à 4 sons']}};
+const LVNAMES={ch:{1:['Niveau 1 : majeur, mineur, power chord','Niveau 2 : + accord 7','Niveau 3 : accords sur basse'],2:['Niveau 1 : accords à 3 sons','Niveau 2 : accords à 4 sons','Niveau 3 : renversements et basses étrangères']}};
 function lvlSeg(id,ex,onChange){ const el=$(id), m=LVMAX[ex][CYCLE], cur=getLv(ex);
   el.innerHTML=[...Array(m).keys()].map(i=>`<button type="button" data-l="${i+1}" aria-pressed="${i+1===cur}">${(LVNAMES[ex]&&LVNAMES[ex][CYCLE][i])||'Niveau '+(i+1)}</button>`).join('');
   el.querySelectorAll('button').forEach(b=>b.onclick=()=>{ LVL[ex+CYCLE]=+b.dataset.l; try{localStorage.setItem('atelier-fm-niveaux',JSON.stringify(LVL));}catch(e){} lvlSeg(id,ex,onChange); onChange(); }); }
