@@ -402,6 +402,7 @@ const chordNotes=(root,q)=>CH[q][0].map(([s,t])=>up(root,s,t));
 const SL={
  r: {tone:0,lab:'Fondamentale à la basse',ex:()=>'La basse est la fondamentale : accord à l\'état fondamental.'},
  t: {tone:1,lab:'1er renversement (tierce à la basse)',ex:()=>'La tierce est à la basse : premier renversement. Son plus léger, idéal pour une ligne de basse qui monte ou descend par degrés conjoints.'},
+ s: {tone:3,lab:'3e renversement (septième à la basse)',ex:()=>'La septième est à la basse : troisième renversement. Elle veut descendre ensuite d\'un degré conjoint (par exemple G7/F → C/E).'},
  q: {tone:2,lab:'2e renversement (quinte à la basse)',ex:()=>'La quinte est à la basse : deuxième renversement. Son instable, souvent utilisé en passage ou juste avant une cadence.'},
  b7:{st:6,s:10,lab:'Basse étrangère un ton sous la fondamentale (type D/C)',ex:(R,B,q)=>`La basse n'est pas dans l'accord : elle est un ton sous la fondamentale. On entend un ${R}${q==='m'?'m7':'7'} avec la 7e à la basse${q===''?' (couleur lydienne, très utilisée en pop et en musique de film)':''}.`},
  n9:{st:1,s:2,lab:'Basse étrangère un ton au-dessus de la fondamentale (type F/G)',ex:(R,B)=>`La basse n'est pas dans l'accord : elle est un ton au-dessus de la fondamentale. On entend un ${B}9sus4 (ou ${B}11) : une dominante suspendue, sans tierce, typique de la soul, du gospel et de la pop.`},
@@ -410,10 +411,12 @@ const SL={
  m7:{st:6,s:11,lab:'Basse étrangère un demi-ton sous la fondamentale (type C/B)',ex:(R)=>`La basse n'est pas dans l'accord : elle est un demi-ton sous la fondamentale. On entend un ${R}Maj7 avec la 7e à la basse : souvent une basse de passage qui descend (C – C/B – Am).`},
 };
 // par cycle : natures d'accord et basses possibles (les basses non jouables sur une nature sont écartées)
-const SL_LV={1:{q:['','m'],b:['r','t','q','b7','n9']},2:{q:['','m'],b:['r','t','q','b7','n9','s6','f4','m7']}};
+const SL_LV={1:{q:['','m'],b:['r','t','q','b7','n9']},2:{q:['','m'],q4:['Maj7','7','m7','m7♭5'],b:['r','t','q','b7','n9','s6','f4','m7','s']}};
 const SL_NOT={m:['n9','m7']};
+// accords à 4 sons : seulement les renversements (une basse étrangère en ferait un autre accord)
+const slOk=(q,k)=>CH[q][0].length===4?['r','t','q','s'].includes(k):k!=='s'&&!(SL_NOT[q]||[]).includes(k);
 function slashBass(root,q,k){ const sl=SL[k], ns=chordNotes(root,q); let b=sl.tone!==undefined?Object.assign({},ns[sl.tone]):up(root,sl.st,sl.s);
-  b=Object.assign({},b,{o:3}); while(dpos(b)>27) b.o--; while(dpos(b)<17) b.o++; return b; }
+  b=Object.assign({},b,{o:3}); while(dpos(b)>26) b.o--; while(dpos(b)<19) b.o++; return b; }
 
 // Tonalités majeures
 const KEYROOTS={C:{l:0,a:0},G:{l:4,a:0},D:{l:1,a:0},A:{l:5,a:0},E:{l:2,a:0},F:{l:3,a:0},'B♭':{l:6,a:-1},'E♭':{l:2,a:-1}};
@@ -767,15 +770,15 @@ function ivNew(){
     });
   } else if(getLv('ch')===3){
     const L=SL_LV[CYCLE]; let root,q,k,notes,bass;
-    do{ k=rnd(L.b); q=rnd(L.q.filter(x=>!(SL_NOT[x]||[]).includes(k))); root=Object.assign({},rnd(CYCLE===1?ROOTS.slice(0,9):ROOTS)); notes=chordNotes(root,q); bass=slashBass(root,q,k); }
+    do{ const qs=L.q4&&Math.random()<0.5?L.q4:L.q; q=rnd(qs); k=rnd(L.b.filter(x=>slOk(q,x))); root=Object.assign({},rnd(CYCLE===1?ROOTS.slice(0,9):ROOTS)); notes=chordNotes(root,q); bass=slashBass(root,q,k); }
     while(notes.some(n=>Math.abs(n.a)>1)||Math.abs(bass.a)>1||dpos(notes[notes.length-1])>dpos({l:2,o:5}));
     const nm=x=>en(root)+q+(x==='r'?'':'/'+en(slashBass(root,q,x)));
     IVC={kind:'slash',root,q,k,notes,bass};
     $('ivStaff').innerHTML=engraveGrand(notes,bass);
-    const pool=L.b.filter(x=>!(SL_NOT[q]||[]).includes(x)&&x!==k&&Math.abs(slashBass(root,q,x).a)<=1);
+    const pool=L.b.filter(x=>slOk(q,x)&&x!==k&&Math.abs(slashBass(root,q,x).a)<=1);
     const opts=shuffle(shuffle(pool).slice(0,CYCLE===1?3:4).concat([k]));
     if(ear){
-      $('ivQ').textContent='Écoute la basse puis l\'accord : quelle est la note à la basse ?';
+      $('ivQ').textContent=`Écoute la basse puis l'accord (${notes.length===4?'accord à 4 sons':'accord à 3 sons'}) : quelle est la note à la basse ?`;
       $('ivOpts').innerHTML=opts.map(v=>`<button type="button" class="choice" data-v="${v}">${SL[v].lab}</button>`).join('');
     } else {
       $('ivQ').textContent='Lis les deux portées (accord en clé de sol, basse en clé de fa). Quel est cet accord ?';
@@ -849,7 +852,7 @@ const wpick=obj=>{ const e=Object.entries(obj); let r=Math.random()*e.reduce((a,
 let LVL={}; try{ LVL=JSON.parse(localStorage.getItem('atelier-fm-niveaux')||'{}')||{}; }catch(e){}
 const LVMAX={mel:{1:2,2:3},dict:{1:2,2:3},ry:{1:2,2:3},ch:{1:3,2:3}};
 const getLv=ex=>Math.min(LVL[ex+CYCLE]||1,LVMAX[ex][CYCLE]);
-const LVNAMES={ch:{1:['Niveau 1 : majeur, mineur, power chord','Niveau 2 : + accord 7','Niveau 3 : accords sur basse'],2:['Niveau 1 : accords à 3 sons','Niveau 2 : accords à 4 sons','Niveau 3 : renversements et basses étrangères']}};
+const LVNAMES={ch:{1:['Niveau 1 : majeur, mineur, power chord','Niveau 2 : + accord 7','Niveau 3 : accords sur basse'],2:['Niveau 1 : accords à 3 sons','Niveau 2 : accords à 4 sons','Niveau 3 : renversements (3 et 4 sons) et basses étrangères']}};
 function lvlSeg(id,ex,onChange){ const el=$(id), m=LVMAX[ex][CYCLE], cur=getLv(ex);
   el.innerHTML=[...Array(m).keys()].map(i=>`<button type="button" data-l="${i+1}" aria-pressed="${i+1===cur}">${(LVNAMES[ex]&&LVNAMES[ex][CYCLE][i])||'Niveau '+(i+1)}</button>`).join('');
   el.querySelectorAll('button').forEach(b=>b.onclick=()=>{ LVL[ex+CYCLE]=+b.dataset.l; try{localStorage.setItem('atelier-fm-niveaux',JSON.stringify(LVL));}catch(e){} lvlSeg(id,ex,onChange); onChange(); }); }
