@@ -20,7 +20,7 @@ L'appli fonctionne ensuite **hors ligne**, sons compris (seuls les liens YouTube
 
 | Onglet | Exercices |
 |---|---|
-| **Quiz de cours** | Toutes les notions des deux livrets (plus de 170 questions au cycle 1, près de 300 au cycle 2), 20 tirées au hasard à chaque série, avec une explication pour chaque réponse |
+| **Quiz de cours** | Toutes les notions des deux livrets (plus de 170 questions au cycle 1, près de 290 au cycle 2), 20 tirées au hasard à chaque série, avec une explication pour chaque réponse |
 | **Intervalles et accords** | Intervalles ascendants, descendants et harmoniques, accords par niveaux (cycle 1 : majeur, mineur, power chord, puis accord 7 ; cycle 2 : triades, puis accords à 4 sons), **à la lecture** (portée seule) ou **à l'oreille** (son seul), jamais les deux en même temps ; **dictée mélodique** : une courte mélodie générée au hasard sur un matériau du livret (gammes majeure et mineures, pentatoniques, gamme blues, modes), à retrouver parmi trois partitions. Niveaux au choix (2 au cycle 1, 3 au cycle 2), repère sonore au choix (bourdon, accord, accompagnement), swing, 3/4 et 12/8, triolets et doubles croches, dominantes secondaires entendues dans la mélodie |
 | **Degrés et grilles** | Degrés, cadences, dictée de degrés à l'oreille (au piano, tempo réglable, plusieurs niveaux), analyse de grille, transposition, grilles de vrais morceaux. Les enchaînements sont générés au hasard selon les règles de l'harmonie tonale |
 | **Rythme et batterie** | Compter une mesure (1 i et a, 1 ti ti ; plusieurs niveaux, 3/4 et 12/8 au cycle 2), reconnaître un groove ou une clave, passer d'une partition de batterie à la grille et inversement. Les grooves varient à chaque fois |

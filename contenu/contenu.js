@@ -180,7 +180,6 @@ const QUIZ1=[
  {q:"Quels artistes sont associés à la chanson ?",o:["Édith Piaf, Georges Brassens, Jacques Brel, Stromae","AC/DC, Nirvana","Run-DMC, Dr. Dre","B.B. King, James Brown"],a:0,e:"Le texte au premier plan, la voix mise en avant."},
  {q:"Quels artistes sont associés au jazz ?",o:["Louis Armstrong, Duke Ellington, Miles Davis, John Coltrane","Kraftwerk, AC/DC","Bob Marley, Peter Tosh","Stromae, Angèle"],a:0,e:"Improvisation, swing, standards, accords à 4 sons."},
  {q:"Quels sont les pionniers de la musique électronique cités dans le livret ?",o:["Kraftwerk et Jean-Michel Jarre","The Beatles et les Rolling Stones","Miles Davis et Coltrane","Brassens et Brel"],a:0,e:"Puis la French touch : Daft Punk, Justice."},
- {q:"Dans un commentaire d'écoute, que se demande-t-on pour le rythme ?",o:["Tempo lent, médium ou rapide ? Binaire ou ternaire ?","Quelle est la tonalité ?","Qui a écrit les paroles ?","En quelle année est né le chanteur ?"],a:0,e:"On regarde aussi le style, les instruments, la forme, les matériaux et le caractère."},
 ];
 const QUIZ2=[
  {q:"Une quinte renversée devient…",o:["Une quarte","Une sixte","Une tierce","Une quinte"],a:0,e:"Chiffre + chiffre = 9 : 5 + 4 = 9. De même, 3 ↔ 6 et 2 ↔ 7."},
@@ -469,10 +468,6 @@ const QUIZ2=[
  {q:"Qu'appelle-t-on la « guerre du volume » (années 1990–2000) ?",o:["On compresse de plus en plus fort pour que le morceau sonne plus fort","Un concours de groupes","Un style de metal","Un festival"],a:0,e:"Exemple du livret : Death Magnetic (Metallica)."},
  {q:"Le mastering, c'est…",o:["La dernière étape : on équilibre et on finalise le morceau mixé pour toutes les écoutes","L'enregistrement de la batterie","L'écriture des paroles","Le réglage des retours"],a:0,e:"Volume global, couleur."},
  {q:"En production, que veut dire la « définition » d'un son ?",o:["Sa netteté : on distingue clairement chaque instrument","Sa durée","Son volume","Sa hauteur"],a:0,e:"La compression rend le son plus égal, plus dense, plus « devant »."},
- {q:"Dans un commentaire d'écoute, quelle est la règle d'or ?",o:["Ton lecteur n'a jamais entendu le morceau : il faut le lui faire « entendre »","Donner son avis dès la première ligne","Citer le titre au début","Ne parler que des paroles"],a:0,e:"Une description précise, organisée et vivante, pas un « j'aime / j'aime pas »."},
- {q:"Dans un commentaire d'écoute, quand révèle-t-on le titre et l'artiste ?",o:["À la fin, après les indices","Dès la première phrase","Jamais","Au milieu"],a:0,e:"On termine par la révélation, puis par un avis argumenté."},
- {q:"Comment organiser les écoutes avant d'écrire un commentaire ?",o:["Une écoute globale, puis le minutage des parties, puis une couche à la fois","Une seule écoute très fort","Lire les paroles seulement","Écouter seulement le refrain"],a:0,e:"Batterie, puis basse, puis voix…"},
- {q:"À l'examen du cycle 2, quelle différence entre le relevé et le déchiffrage ?",o:["Relevé : écouter et retrouver ; déchiffrage : lire une partition","Aucune","Le relevé se fait au piano seulement","Le déchiffrage se fait à l'oreille"],a:0,e:"Les deux se préparent pendant la mise en loge."},
 ];
 // Grilles de morceaux (cycle 2 sauf mention)
 const SONGQ=[
