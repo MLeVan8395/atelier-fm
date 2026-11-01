@@ -94,6 +94,8 @@ button.chordopt{font-family:var(--chord);font-weight:700;font-size:1.05rem}
 #snd{color:var(--orange)}
 .video{position:relative;width:100%;max-width:640px;aspect-ratio:16/9;border-radius:10px;overflow:hidden;background:#000;border:1px solid var(--line)}
 .video iframe{position:absolute;inset:0;width:100%;height:100%;border:0}
+a.big{display:inline-block;font-size:1rem;line-height:1.3;font-family:var(--body);background:var(--accent);color:var(--sheet);font-weight:700;padding:10px 18px;border-radius:8px;text-decoration:none}
+.vfall{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;padding:16px;text-align:center;color:#ddd;font-size:15px}
 .vxpanel{display:flex;flex-wrap:wrap;gap:12px 28px;align-items:center}
 .vxpanel b{display:block;font-family:var(--chord);font-size:1.6rem}
 .vxmeter{flex:1 1 260px;min-width:220px}
@@ -331,7 +333,7 @@ button.chordopt{font-family:var(--chord);font-weight:700;font-size:1.05rem}
 
 <section class="panel" id="p-ecoute" aria-labelledby="h-st">
   <h2 id="h-st">Écoute</h2>
-  <p class="lead">Écoute le morceau (le lien ouvre la vidéo sur YouTube), puis réponds. On te demande tour à tour le style, un instrument, un son de guitare, un clavier, un effet, le placement rythmique ou le type de chant.</p>
+  <p class="lead">Écoute le morceau (la vidéo se lance dans la question), puis réponds. On te demande tour à tour le style, un instrument, un son de guitare, un clavier, un effet, le placement rythmique ou le type de chant.</p>
   <div class="sub" role="group" aria-label="Catégorie" id="stCats"></div>
   <div class="card stack" id="stQuiz">
     <div class="row" style="justify-content:space-between"><span class="meta" id="stCount"></span><span class="tag" id="stCat"></span></div>
@@ -1415,13 +1417,34 @@ function stShow(){
   $('stLink').href=yt(it.t,it.a); $('stQ').textContent=it.q;
   // lecteur YouTube intégré (mode « confidentialité renforcée » : pas de cookie avant la lecture)
   const vid=YT[it.t];
-  if(vid){ $('stVideo').hidden=false; $('stLinkTxt').textContent='Si la vidéo ne s\'affiche pas : '; $('stVideo').innerHTML=`<iframe src="https://www.youtube-nocookie.com/embed/${vid}?rel=0&modestbranding=1&enablejsapi=1" title="${it.t} — ${it.a}" allow="encrypted-media; picture-in-picture; fullscreen" allowfullscreen referrerpolicy="strict-origin-when-cross-origin"></iframe>`; }
-  else { $('stVideo').hidden=true; $('stVideo').innerHTML=''; $('stLinkTxt').textContent='Écouter : '; }
+  if(vid){ $('stVideo').hidden=false; $('stLinkTxt').textContent='Si la vidéo ne s\'affiche pas : '; stEmbed(vid,it); }
+  else { stEmbedStop(); $('stVideo').hidden=true; $('stVideo').innerHTML=''; $('stLinkTxt').textContent='Écouter : '; }
   const right=it.o[0];
   $('stOpts').innerHTML=shuffle(it.o).map(x=>`<button type="button" class="choice" data-v="${x}">${x}</button>`).join('');
   $('stOpts').querySelectorAll('button').forEach(b=>b.onclick=()=>{const ok=answer($('stOpts'),b,x=>x.dataset.v===right,'st'); fb('stFb',ok,ok?'Exact !':'Non.',it.e);});
 }
 // met la vidéo en pause (quand on change d'onglet ou qu'on passe à la playlist)
+// Vidéo intégrée : on écoute les messages du lecteur YouTube. Si la vidéo refuse d'être intégrée
+// (erreurs 100, 101, 150, 153) ou si le lecteur ne répond pas, on remplace le cadre par un bouton.
+let stWatch=null;
+function stEmbedStop(){ $('stLink').parentNode.hidden=false; $('stLink').classList.remove('big'); $('stLink').textContent='ouvrir sur YouTube'; if(stWatch){ clearTimeout(stWatch.t); window.removeEventListener('message',stWatch.h); stWatch=null; } }
+function stFallback(it,why){ stEmbedStop(); const v=$('stVideo'); v.innerHTML=`<div class="vfall"><div>${why}</div><a class="big" href="${yt(it.t,it.a)}" target="_blank" rel="noopener">▶ Écouter sur YouTube</a></div>`; $('stLinkTxt').textContent=''; $('stLink').parentNode.hidden=true; }
+function stEmbed(vid,it){
+  stEmbedStop();
+  const v=$('stVideo'), org=encodeURIComponent(location.origin);
+  v.innerHTML=`<iframe src="https://www.youtube-nocookie.com/embed/${vid}?rel=0&modestbranding=1&playsinline=1&enablejsapi=1&origin=${org}" title="${it.t} — ${it.a}" allow="autoplay; encrypted-media; picture-in-picture; fullscreen" allowfullscreen referrerpolicy="strict-origin-when-cross-origin"></iframe>`;
+  const f=v.querySelector('iframe'); let ok=false;
+  const h=e=>{ if(!/youtube(-nocookie)?\.com$/.test((e.origin||'').replace(/^https?:\/\//,''))||e.source!==f.contentWindow) return;
+    let d=e.data; try{ if(typeof d==='string') d=JSON.parse(d); }catch(x){ return; }
+    if(!d) return;
+    if(d.event==='onReady'||d.event==='infoDelivery'||d.event==='initialDelivery') ok=true;
+    if(d.event==='onError') stFallback(it,'Cette vidéo ne peut pas être lue dans l\'appli (choix de l\'éditeur).'); };
+  window.addEventListener('message',h);
+  const hello=()=>{ try{ f.contentWindow.postMessage(JSON.stringify({event:'listening',id:1,channel:'widget'}),'*'); }catch(x){} };
+  f.addEventListener('load',()=>{ hello(); setTimeout(hello,800); });
+  // Lecteur muet au bout de 9 s : on garde le cadre (connexion lente possible) mais le lien devient un vrai bouton.
+  stWatch={h,t:setTimeout(()=>{ if(!ok){ $('stLinkTxt').textContent='La vidéo ne se charge pas ? '; $('stLink').classList.add('big'); $('stLink').textContent='▶ Écouter sur YouTube'; } },9000)};
+}
 function stPause(){ const f=$('stVideo')&&$('stVideo').querySelector('iframe'); if(f&&f.contentWindow) try{ f.contentWindow.postMessage(JSON.stringify({event:'command',func:'pauseVideo',args:[]}),'*'); }catch(e){} }
 function stList(){
   $('stList').innerHTML=STYLES.filter(s=>s.c<=CYCLE).map(s=>`<div class="style"><h3>${s.s}${s.c===2&&CYCLE===2?'<span class="tag">cycle 2</span>':''}</h3><p>${s.d}</p><ul>${s.songs.map(x=>`<li><span><i>${x[0]}</i> — ${x[1]}</span><a href="${yt(x[0],x[1])}" target="_blank" rel="noopener">▶ Écouter</a></li>`).join('')}</ul></div>`).join('');
