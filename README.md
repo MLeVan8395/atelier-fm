@@ -14,7 +14,7 @@ L'atelier s'installe comme une application, gratuitement et sans passer par une 
 - **iPhone / iPad** (Safari) : bouton Partager → **Sur l'écran d'accueil**.
 - **Ordinateur** (Chrome, Edge) : icône d'installation dans la barre d'adresse.
 
-L'appli fonctionne ensuite **hors ligne**, sons compris (seuls les liens YouTube demandent une connexion). Elle se met à jour toute seule à chaque ouverture avec une connexion : une modification faite sur GitHub arrive chez les élèves sans rien réinstaller.
+L'appli fonctionne ensuite **hors ligne**, sons compris (seules les vidéos YouTube demandent une connexion). Elle se met à jour toute seule à chaque ouverture avec une connexion : une modification faite sur GitHub arrive chez les élèves sans rien réinstaller.
 
 ## Ce qu'on y trouve
 
@@ -24,17 +24,17 @@ L'appli fonctionne ensuite **hors ligne**, sons compris (seuls les liens YouTube
 | **Intervalles et accords** | Intervalles ascendants, descendants et harmoniques, accords par niveaux (cycle 1 : majeur, mineur, power chord, puis accord 7 ; cycle 2 : triades, puis accords à 4 sons), **à la lecture** (portée seule) ou **à l'oreille** (son seul), jamais les deux en même temps ; **dictée mélodique** : une courte mélodie générée au hasard sur un matériau du livret (gammes majeure et mineures, pentatoniques, gamme blues, modes), à retrouver parmi trois partitions. Niveaux au choix (2 au cycle 1, 3 au cycle 2), repère sonore au choix (bourdon, accord, accompagnement), swing, 3/4 et 12/8, triolets et doubles croches, dominantes secondaires entendues dans la mélodie |
 | **Degrés et grilles** | Degrés, cadences, dictée de degrés à l'oreille (au piano, tempo réglable, plusieurs niveaux), analyse de grille, transposition, grilles de vrais morceaux. Les enchaînements sont générés au hasard selon les règles de l'harmonie tonale |
 | **Rythme et batterie** | Compter une mesure (1 i et a, 1 ti ti ; plusieurs niveaux, 3/4 et 12/8 au cycle 2), reconnaître un groove ou une clave, passer d'une partition de batterie à la grille et inversement. Les grooves varient à chaque fois |
-| **Écoute** | Morceaux à écouter (lien direct vers la vidéo YouTube, officielle quand elle existe) : style, instrument, son de guitare, clavier, effet, placement rythmique, type de chant |
+| **Écoute** | Morceaux à écouter (vidéo YouTube intégrée dans la question, officielle quand elle existe) : style, instrument, son de guitare, clavier, effet, placement rythmique, type de chant |
 | **Chant** | Chanter des intervalles, des gammes (majeure, mineures, pentatoniques, blues, modes) et des arpèges d'accords : la note de départ est jouée au piano, l'atelier écoute la voix au micro et valide chaque note tenue juste. Réglage de la tessiture (voix aiguë, médium, ténor, grave) et de la tolérance. Le son du micro est analysé dans la page, jamais enregistré ni envoyé |
 
 Un bouton **Cycle 1 / Cycle 2** adapte toutes les questions au niveau.
 
 ## Principes
 
-- **Aucune donnée collectée.** Les scores restent dans le navigateur de l'élève. Pas de compte, pas de publicité, pas de cookie de suivi.
+- **Aucune donnée collectée.** Les scores restent dans le navigateur de l'élève. Pas de compte, pas de publicité, pas de cookie de suivi. Les vidéos de l'onglet Écoute sont intégrées en mode « confidentialité renforcée » de YouTube (youtube-nocookie.com) : rien n'est déposé avant la lecture, mais YouTube peut collecter des données quand on lance une vidéo.
 - **Rien à installer.** Une page web. Pour l'utiliser hors ligne, télécharge le dossier : ouverte directement depuis le disque (`index.html`), la page remplace les sons de piano et de batterie par des sons de synthèse, car le navigateur bloque la lecture des fichiers locaux ; lancée depuis un petit serveur local (`python3 -m http.server`), elle a tous ses sons.
 - **Conventions de notation françaises** : notes seules en Do, Ré, Mi… ; accords et tonalités en lettres (C, Am7, « en G ») ; intervalles notés ♭2, 2, ♭3, 3…
-- **Pas d'extrait audio protégé** : les morceaux sont cités, et un lien ouvre la vidéo sur YouTube (version officielle ou chaîne de l'artiste quand elle existe). Les exercices utilisent des échantillons libres de piano et de batterie (dossier `sons/`, voir les crédits).
+- **Pas d'extrait audio protégé** : les morceaux sont cités, et la vidéo YouTube est intégrée dans la question (avec un lien de secours vers YouTube) (version officielle ou chaîne de l'artiste quand elle existe). Les exercices utilisent des échantillons libres de piano et de batterie (dossier `sons/`, voir les crédits).
 - **Thème sombre** par défaut, avec un bouton pour passer en thème clair.
 
 ## Contribuer

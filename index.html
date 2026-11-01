@@ -92,6 +92,8 @@ button.chordopt{font-family:var(--chord);font-weight:700;font-size:1.05rem}
 .grid button.cell.koc{background:color-mix(in srgb,var(--red) 30%,transparent)}
 .grid button.cell.miss{color:var(--orange);box-shadow:inset 0 0 0 2px var(--orange)}
 #snd{color:var(--orange)}
+.video{position:relative;width:100%;max-width:640px;aspect-ratio:16/9;border-radius:10px;overflow:hidden;background:#000;border:1px solid var(--line)}
+.video iframe{position:absolute;inset:0;width:100%;height:100%;border:0}
 .vxpanel{display:flex;flex-wrap:wrap;gap:12px 28px;align-items:center}
 .vxpanel b{display:block;font-family:var(--chord);font-size:1.6rem}
 .vxmeter{flex:1 1 260px;min-width:220px}
@@ -334,7 +336,8 @@ button.chordopt{font-family:var(--chord);font-weight:700;font-size:1.05rem}
   <div class="card stack" id="stQuiz">
     <div class="row" style="justify-content:space-between"><span class="meta" id="stCount"></span><span class="tag" id="stCat"></span></div>
     <div class="big" id="stSong"></div>
-    <div><a class="listen" id="stLink" href="#" target="_blank" rel="noopener">▶ Écouter sur YouTube</a></div>
+    <div class="video" id="stVideo" hidden></div>
+    <div class="meta" id="stLinkRow"><span id="stLinkTxt">Si la vidéo ne s'affiche pas : </span><a id="stLink" href="#" target="_blank" rel="noopener">ouvrir sur YouTube</a></div>
     <div class="qtext" id="stQ" style="margin:0"></div>
     <div class="row" id="stOpts"></div>
     <div class="fb" id="stFb" hidden></div>
@@ -1400,7 +1403,7 @@ function stCats(){
   const cats=[['all','Tout mélangé'],['style','Styles'],['inst','Instruments'],['guit','Sons de guitare'],['clav','Claviers'],['fx','Effets'],['place','Placement rythmique'],['voix','Chant'],['list','Playlist par style']]
     .filter(([k])=>k==='all'||k==='list'||k==='style'||LISTEN.some(x=>x.cat===k&&x.c<=CYCLE));
   $('stCats').innerHTML=cats.map(([k,l])=>`<button type="button" data-k="${k}" aria-pressed="${k===STC}">${l}</button>`).join('');
-  $('stCats').querySelectorAll('button').forEach(b=>b.onclick=()=>{ STC=b.dataset.k; const list=STC==='list'; $('stQuiz').hidden=list; $('stList').hidden=!list; if(!list) stStart(); else stCats(); });
+  $('stCats').querySelectorAll('button').forEach(b=>b.onclick=()=>{ STC=b.dataset.k; const list=STC==='list'; $('stQuiz').hidden=list; $('stList').hidden=!list; if(!list) stStart(); else { stPause(); stCats(); } });
   const list=STC==='list'; $('stQuiz').hidden=list; $('stList').hidden=!list;
 }
 function stShow(){
@@ -1410,10 +1413,16 @@ function stShow(){
   $('stCount').textContent=`Question ${STQ.i+1} sur ${STQ.order.length}`; $('stCat').textContent=LCAT[it.cat];
   $('stSong').innerHTML=`${it.t} <span class="meta" style="font-size:1rem;font-weight:400">— ${it.a}</span>`;
   $('stLink').href=yt(it.t,it.a); $('stQ').textContent=it.q;
+  // lecteur YouTube intégré (mode « confidentialité renforcée » : pas de cookie avant la lecture)
+  const vid=YT[it.t];
+  if(vid){ $('stVideo').hidden=false; $('stLinkTxt').textContent='Si la vidéo ne s\'affiche pas : '; $('stVideo').innerHTML=`<iframe src="https://www.youtube-nocookie.com/embed/${vid}?rel=0&modestbranding=1&enablejsapi=1" title="${it.t} — ${it.a}" allow="encrypted-media; picture-in-picture; fullscreen" allowfullscreen referrerpolicy="strict-origin-when-cross-origin"></iframe>`; }
+  else { $('stVideo').hidden=true; $('stVideo').innerHTML=''; $('stLinkTxt').textContent='Écouter : '; }
   const right=it.o[0];
   $('stOpts').innerHTML=shuffle(it.o).map(x=>`<button type="button" class="choice" data-v="${x}">${x}</button>`).join('');
   $('stOpts').querySelectorAll('button').forEach(b=>b.onclick=()=>{const ok=answer($('stOpts'),b,x=>x.dataset.v===right,'st'); fb('stFb',ok,ok?'Exact !':'Non.',it.e);});
 }
+// met la vidéo en pause (quand on change d'onglet ou qu'on passe à la playlist)
+function stPause(){ const f=$('stVideo')&&$('stVideo').querySelector('iframe'); if(f&&f.contentWindow) try{ f.contentWindow.postMessage(JSON.stringify({event:'command',func:'pauseVideo',args:[]}),'*'); }catch(e){} }
 function stList(){
   $('stList').innerHTML=STYLES.filter(s=>s.c<=CYCLE).map(s=>`<div class="style"><h3>${s.s}${s.c===2&&CYCLE===2?'<span class="tag">cycle 2</span>':''}</h3><p>${s.d}</p><ul>${s.songs.map(x=>`<li><span><i>${x[0]}</i> — ${x[1]}</span><a href="${yt(x[0],x[1])}" target="_blank" rel="noopener">▶ Écouter</a></li>`).join('')}</ul></div>`).join('');
 }
@@ -1425,6 +1434,7 @@ function route(){
   VIEWS.forEach(x=>$('p-'+x).classList.toggle('on',x===v));
   document.querySelectorAll('#tabs a').forEach(a=>a.setAttribute('aria-current',a.getAttribute('href')==='#'+v?'page':'false'));
   if(v!=='chant') vxStopListen();
+  if(v!=='ecoute') stPause();
   stopLoop();
 }
 function ryShow(){
