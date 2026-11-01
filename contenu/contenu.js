@@ -714,10 +714,10 @@ const ANA=[
  {c:2,k:'C',ch:['CMaj7','Fm6','CMaj7','B♭7'],d:['IMaj7','IVm6','IMaj7','♭VII7']},
  {c:2,k:'C',ch:['Dm7','D♭7','CMaj7','CMaj7'],d:['IIm7','SubV7','IMaj7','IMaj7']},
  {c:2,k:'E',ch:['C♯m7','F♯7','A/B','E'],d:['VIm7','V7/V','IV/V','I']},
- {c:2,k:'F',ch:['FMaj7','F♯dim7','Gm7','C7'],d:['IMaj7','♯Idim7','IIm7','V7']},
+ {c:2,k:'F',ch:['FMaj7','F♯dim7','Gm7','C7'],d:['IMaj7','V7/II','IIm7','V7']}, // F♯dim7 = D7♭9 sans fondamentale : dominante secondaire de Gm7
  {c:2,k:'G',ch:['GMaj7','Em7','Am7','D7','Bm7','E7','Am7','D7'],d:['IMaj7','VIm7','IIm7','V7','IIIm7','V7/II','IIm7','V7']},
 ];
-const ANAOPT={1:['I','IIm','IIIm','IV','V','VIm','VIIdim'],2:['IMaj7','IIm7','IIIm7','IVMaj7','V7','VIm7','VIIm7♭5','V7/II','V7/III','V7/IV','V7/V','V7/VI','IVm6','♭VII7','SubV7','♯Idim7','IV/V','I']};
+const ANAOPT={1:['I','IIm','IIIm','IV','V','VIm','VIIdim'],2:['IMaj7','IIm7','IIIm7','IVMaj7','V7','VIm7','VIIm7♭5','V7/II','V7/III','V7/IV','V7/V','V7/VI','IVm6','♭VII7','SubV7','IV/V','I']};
 // Transposer : grilles de morceaux (k = tonalité de la grille ; « m » pour une tonalité mineure)
 const TRANSPO=[
  {c:1,t:"La Bamba",a:"Ritchie Valens",k:'C',g:['C','F','G','F']},

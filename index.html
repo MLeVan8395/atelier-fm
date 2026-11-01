@@ -11,7 +11,7 @@
 <link rel="apple-touch-icon" href="icones/apple-touch-icon.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Bodoni+Moda:ital,opsz,wght@0,6..96,500;0,6..96,700;1,6..96,500&family=Atkinson+Hyperlegible:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
 <script>try{document.documentElement.setAttribute('data-theme',localStorage.getItem('atelier-fm-theme')==='light'?'light':'dark');}catch(e){document.documentElement.setAttribute('data-theme','dark');}</script>
 <style>
 /* Même papier à musique que l'Atelier de contrepoint : encre bleu nuit, correction rouge, validation verte.
@@ -36,8 +36,8 @@
 html,body{margin:0;background:var(--paper);color:var(--ink);font-family:var(--body);font-size:17px;line-height:1.5}
 header{background:var(--sheet);border-bottom:1px solid var(--line)}
 .top{max-width:1100px;margin:0 auto;padding:18px 20px 0;display:flex;flex-wrap:wrap;gap:12px 24px;align-items:center;justify-content:space-between}
-h1{font-family:var(--display);font-weight:700;font-size:2.1rem;letter-spacing:.01em;margin:0;text-wrap:balance}
-h1 em{font-style:italic;font-weight:500;color:var(--accent)}
+h1{font-family:var(--body);font-weight:700;font-size:1.9rem;letter-spacing:0;margin:0;text-wrap:balance}
+h1 em{font-style:normal;font-weight:700;color:var(--accent)}
 .topright{display:flex;flex-wrap:wrap;gap:10px 18px;align-items:center}
 .score{font-size:.9rem;color:var(--muted);font-variant-numeric:tabular-nums}
 .score b{color:var(--ink)}
@@ -939,16 +939,16 @@ function engraveMelody(mel,sk,o2){
 const DEG={'I':[0,0,''],'IIm':[1,2,'m'],'IIIm':[2,4,'m'],'IV':[3,5,''],'V':[4,7,''],'VIm':[5,9,'m'],'VIIdim':[6,11,'dim'],
  'IMaj7':[0,0,'Maj7'],'IIm7':[1,2,'m7'],'IIIm7':[2,4,'m7'],'IVMaj7':[3,5,'Maj7'],'V7':[4,7,'7'],'VIm7':[5,9,'m7'],'VIIm7♭5':[6,11,'m7♭5'],
  'V7/II':[5,9,'7'],'V7/III':[6,11,'7'],'V7/IV':[0,0,'7'],'V7/V':[1,2,'7'],'V7/VI':[2,4,'7'],
- 'IVm6':[3,5,'m6'],'♭VII7':[6,10,'7'],'SubV7':[1,1,'7'],'♯Idim7':[0,1,'dim7']};
+ 'IVm6':[3,5,'m6'],'♭VII7':[6,10,'7'],'SubV7':[1,1,'7'],'V7/II (dim7)':[0,1,'dim7']}; // F♯dim7 en F : D7♭9 sans fondamentale, une dominante secondaire
 // Enchaînements possibles (règles d'harmonie tonale) : degré → degrés qui peuvent suivre
 const NEXT={1:{'I':['IV','V','VIm','IIm','IIIm'],'IIm':['V','V','IV'],'IIIm':['IV','VIm','IIm'],'IV':['V','I','IIm','VIm'],'V':['I','VIm','IV','I'],'VIm':['IV','IIm','V','IIIm']},
- 2:{'IMaj7':['IVMaj7','VIm7','IIm7','IIIm7','V7/VI','V7/II','V7/IV','♯Idim7','V7/V'],'IIm7':['V7','V7','SubV7'],'IIIm7':['VIm7','V7/II','IVMaj7'],
+ 2:{'IMaj7':['IVMaj7','VIm7','IIm7','IIIm7','V7/VI','V7/II','V7/IV','V7/II (dim7)','V7/V'],'IIm7':['V7','V7','SubV7'],'IIIm7':['VIm7','V7/II','IVMaj7'],
     'IVMaj7':['V7','IVm6','IIIm7','IMaj7','V7/V','♭VII7'],'V7':['IMaj7','VIm7','IMaj7'],'VIm7':['IIm7','V7/II','IVMaj7','V7/V'],
-    'V7/II':['IIm7'],'V7/V':['V7'],'V7/VI':['VIm7'],'V7/IV':['IVMaj7'],'V7/III':['IIIm7'],'IVm6':['IMaj7'],'♭VII7':['IMaj7'],'SubV7':['IMaj7'],'♯Idim7':['IIm7']}};
-const RESOLVE=['V7/II','V7/III','V7/IV','V7/V','V7/VI','SubV7','♯Idim7','IVm6','♭VII7']; // accords qui doivent se résoudre : jamais en dernier
+    'V7/II':['IIm7'],'V7/V':['V7'],'V7/VI':['VIm7'],'V7/IV':['IVMaj7'],'V7/III':['IIIm7'],'IVm6':['IMaj7'],'♭VII7':['IMaj7'],'SubV7':['IMaj7'],'V7/II (dim7)':['IIm7']}};
+const RESOLVE=['V7/II','V7/III','V7/IV','V7/V','V7/VI','SubV7','V7/II (dim7)','IVm6','♭VII7']; // accords qui doivent se résoudre : jamais en dernier
 const DICT_LV={1:[['I','IV','V'],['I','IIm','IIIm','IV','V','VIm']],
  2:[['IMaj7','IIm7','IIIm7','IVMaj7','V7','VIm7'],['IMaj7','IIm7','IIIm7','IVMaj7','V7','VIm7','V7/II','V7/V','V7/VI','V7/IV'],Object.keys(NEXT[2])]};
-const DICT_TXT={1:['Niveau 1 : I, IV et V','Niveau 2 : tous les degrés (I, IIm, IIIm, IV, V, VIm)'],2:['Niveau 1 : les accords à 4 sons de la tonalité','Niveau 2 : + dominantes secondaires','Niveau 3 : + emprunts (IVm6, ♭VII7), substitution tritonique, ♯Idim7']};
+const DICT_TXT={1:['Niveau 1 : I, IV et V','Niveau 2 : tous les degrés (I, IIm, IIIm, IV, V, VIm)'],2:['Niveau 1 : les accords à 4 sons de la tonalité','Niveau 2 : + dominantes secondaires','Niveau 3 : + emprunts (IVm6, ♭VII7), substitution tritonique, dim7 à la place d\'une dominante secondaire']};
 function genProg(cyc,len,allowed){
   for(let tries=0;tries<500;tries++){
     const start=cyc===1?(Math.random()<0.8?'I':rnd(['VIm','IV'])):(Math.random()<0.6?'IMaj7':rnd(['IIm7','IIIm7','VIm7','IVMaj7']));
@@ -983,12 +983,17 @@ function playProg(chords,dur){ if(MUTE) return; dur=dur||TEMPO[DGT]; const L=[];
   playNotes(L); }
 function playTonic(k){ const I=degChord(k,'I'); playProg([I],1.8); }
 // Grille d'accords (avec degrés dessous si on les donne)
-function chordGrid(names,degs,cls){ return `<table class="chords ${cls||''}"><tbody><tr>${names.map(c=>`<td>${c}</td>`).join('')}</tr>${degs?`<tr class="deg">${degs.map(d=>`<td>${d}</td>`).join('')}</tr>`:''}</tbody></table>`; }
+const rows4=a=>{ const r=[]; for(let i=0;i<a.length;i+=4) r.push(a.slice(i,i+4).map((x,j)=>[x,i+j])); return r; };
+function chordGrid(names,degs,cls){ return `<table class="chords ${cls||''}"><tbody>${rows4(names).map(row=>`<tr>${row.map(([c])=>`<td>${c}</td>`).join('')}</tr>${degs?`<tr class="deg">${row.map(([,i])=>`<td>${degs[i]}</td>`).join('')}</tr>`:''}`).join('')}</tbody></table>`; }
+// une grille en texte, 4 mesures par ligne (options à choisir)
+const gridText=str=>rows4(str.split('  ·  ')).map(r=>r.map(([c])=>c).join('  |  ')).join('<br>');
 // Transposition
 const KEYS_TR={maj:['C','G','D','A','E','F','B♭','E♭','A♭','D♭'],min:['Am','Em','Bm','F♯m','C♯m','Dm','Gm','Cm','Fm']};
 function parseRoot(s){ const m=s.match(/^([A-G])([♯♭]?)(.*)$/); return {n:{l:LET.indexOf(m[1]),a:m[2]==='♯'?1:m[2]==='♭'?-1:0,o:4},rest:m[3]}; }
 function parseChord(sym){ const [main,bass]=sym.split('/'); const r=parseRoot(main); return {root:r.n,q:r.rest,bass:bass?parseRoot(bass).n:null}; }
-function ivBetween(a,b){ return [((b.l-a.l)%7+7)%7, (((SEMI[b.l]+b.a)-(SEMI[a.l]+a.a))%12+12)%12]; }
+// intervalle de a vers b : [degrés-lettres, demi-tons] ; les demi-tons suivent les lettres (La → La♭ = [0, -1], et non [0, 11])
+function ivBetween(a,b){ const st=((b.l-a.l)%7+7)%7, nat=(SEMI[b.l]-SEMI[a.l]+12)%12, act=(((SEMI[b.l]+b.a)-(SEMI[a.l]+a.a))%12+12)%12;
+  let d=act-nat; if(d>6) d-=12; if(d<-6) d+=12; return [st,nat+d]; }
 const trNote=(n,iv)=>up(Object.assign({},n,{o:4}),iv[0],iv[1]);
 function trChord(sym,iv){ const c=parseChord(sym); let s=en(trNote(c.root,iv))+c.q; if(c.bass) s+='/'+en(trNote(c.bass,iv)); return s; }
 const okSpell=s=>!/(E♯|B♯|F♭|C♭|𝄪|𝄫)/.test(s);
@@ -1054,18 +1059,20 @@ function dgNew(){
   } else if(DGM==='ana'){
     let it;
     if(Math.random()<0.5){ const pool=ANA.filter(a=>a.c===CYCLE); it=rnd(pool); }
-    else { const k=rnd(keys), d=genProg(CYCLE,4); it={k,ch:d.map(l=>degChord(k,l).name),d}; }
+    else { const k=rnd(keys), d=genProg(CYCLE,4); it={k,ch:d.map(l=>degChord(k,l).name),d:d.map(l=>l==='V7/II (dim7)'?'V7/II':l)}; }
     const opts=ANAOPT[CYCLE];
     $('dgKey').textContent=`Tonalité : ${it.k} majeur`;
     $('dgQ').textContent='Indique le degré de chaque accord, puis vérifie.';
     const sel=i=>`<select id="ana${i}" aria-label="Degré de la mesure ${i+1}"><option value="">?</option>${opts.map(o=>`<option>${o}</option>`).join('')}</select>`;
-    $('dgGrid').innerHTML=`<table class="chords"><tbody><tr>${it.ch.map(c=>`<td>${c}</td>`).join('')}</tr><tr>${it.ch.map((_,i)=>`<td>${sel(i)}</td>`).join('')}</tr></tbody></table>`;
+    $('dgGrid').innerHTML=`<table class="chords"><tbody>${rows4(it.ch).map(row=>`<tr>${row.map(([c])=>`<td>${c}</td>`).join('')}</tr><tr>${row.map(([,i])=>`<td>${sel(i)}</td>`).join('')}</tr>`).join('')}</tbody></table>`;
     $('dgGrid').hidden=false;
     $('dgOpts').innerHTML='<button type="button" class="primary" id="anaCheck">Vérifier</button>';
     $('anaCheck').onclick=()=>{
       let good=0; it.d.forEach((d,i)=>{const e=$('ana'+i); const ok=e.value===d; if(ok) good++; e.classList.add(ok?'okc':'koc'); e.disabled=true;});
       const ok=good===it.d.length; bump('ana',ok); $('anaCheck').disabled=true;
-      fb('dgFb',ok,ok?'Tout est juste !':`${good} sur ${it.d.length}.`,chordGrid(it.ch,it.d));
+      // un accord dim7 chiffré V7/… : on explique qu'il remplace la dominante secondaire
+      const dimNote=it.ch.map((c,i)=>/dim7$/.test(c)&&/^V7\//.test(it.d[i])&&it.ch[i+1]?` ${c} = ${en(up(parseRoot(c).n,-2,-4))}7♭9 sans fondamentale : il joue le rôle de ${it.d[i]}, la dominante secondaire de ${it.ch[i+1]}.`:'').join('');
+      fb('dgFb',ok,ok?'Tout est juste !':`${good} sur ${it.d.length}.`,chordGrid(it.ch,it.d)+(dimNote?`<p style="margin:8px 0 0">${dimNote.trim()}</p>`:''));
     };
   } else if(DGM==='tr'){
     let src,k,label,g;
@@ -1088,7 +1095,7 @@ function dgNew(){
       $('dgKey').textContent=`Grille notée en ${k}`;
       $('dgQ').innerHTML=`Transpose ${label} en <b>${target}</b>.`;
       $('dgGrid').innerHTML=chordGrid(g); $('dgGrid').hidden=false;
-      $('dgOpts').innerHTML=`<div class="opts" style="width:100%">${shuffle(opts).map(x=>`<button type="button" class="chordopt" data-v="${x}">${x}</button>`).join('')}</div>`;
+      $('dgOpts').innerHTML=`<div class="opts" style="width:100%">${shuffle(opts).map(x=>`<button type="button" class="chordopt" data-v="${x}">${gridText(x)}</button>`).join('')}</div>`;
       $('dgOpts').querySelectorAll('button').forEach(b=>b.onclick=()=>{ const ok=answer($('dgOpts'),b,x=>x.dataset.v===opts[0],'tr');
         fb('dgFb',ok,ok?'Exact !':'Non.',`${ok?'':`<p style="margin:0 0 8px">${why[b.dataset.v]}</p>`}On garde les degrés et on change de tonique :${chordGrid(g,degs)}${chordGrid(right,degs)}<p style="margin:8px 0 0">En ${k}, ${degs.map((d,i)=>`${d} = ${g[i]}`).filter((x,i,a)=>a.indexOf(x)===i).join(', ')}. En ${target}, ces mêmes degrés donnent ${[...new Set(right)].join(', ')}.</p>`);});
       return;

@@ -55,4 +55,4 @@ Voir **[CONTRIBUER.md](CONTRIBUER.md)** : pas besoin d'être développeur.
 - Glyphes musicaux (clé de sol, altérations, silences) : tracés issus de la police GNU FreeFont (FreeSerif), utilisés selon son exception de police.
 - Piano : **Salamander Grand Piano V3**, par Alexander Holm, licence [CC BY 3.0](https://creativecommons.org/licenses/by/3.0/) (https://archive.org/details/SalamanderGrandPianoV3), dans la version MP3 du projet Tone.js. Notes raccourcies et passées en mono.
 - Batterie, claves et cloche : **Virtuosity Drums** (batteur : Austin McMahon), licence CC0 (https://github.com/sfzinstruments/virtuosity_drums). Mélangés, raccourcis et convertis en MP3.
-- Polices : Bodoni Moda (titre) et Atkinson Hyperlegible (Google Fonts, licence SIL OFL) ; accords et degrés en Verdana (police du système).
+- Polices : Atkinson Hyperlegible (Google Fonts, licence SIL OFL) ; accords et degrés en Verdana (police du système).
