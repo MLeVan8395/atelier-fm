@@ -321,6 +321,9 @@ const en=n=>LET[n.l]+accS(n.a);                      // accord / tonalité : let
 const IV=[[1,1,'♭2'],[1,2,'2'],[2,3,'♭3'],[2,4,'3'],[3,5,'4'],[3,6,'♯4'],[4,6,'♭5'],[4,7,'5'],[5,8,'♭6'],[5,9,'6'],[6,10,'♭7'],[6,11,'7'],[7,12,'8']];
 const IVNAME={'♭2':'seconde mineure','2':'seconde majeure','♭3':'tierce mineure','3':'tierce majeure','4':'quarte juste','♯4':'quarte augmentée (triton)','♭5':'quinte diminuée (triton)','5':'quinte juste','♭6':'sixte mineure','6':'sixte majeure','♭7':'septième mineure','7':'septième majeure','8':'octave'};
 const IV_C1=['2','♭3','3','4','5','6','8'];
+// Repères musicaux des livrets (cycle 1 : ascendants et descendants ; cycle 2 : ascendants)
+const IV_ASC={'♭2':'Les Dents de la mer (thème)','2':'Frère Jacques (« Frè-re »)','♭3':'Smoke on the Water (riff)','3':'When the Saints Go Marching In','4':'La Marseillaise (« …en-fants »)','♯4':'Les Simpson (générique)','5':'Star Wars (thème)','♭6':'Manhã de Carnaval (Luiz Bonfá)','6':'My Bonnie','♭7':'Somewhere (West Side Story)','8':'Over the Rainbow'};
+const IV_DESC={'♭2':'Lettre à Élise (Beethoven, début)','2':'Yesterday (The Beatles, « Yes-ter… »)','♭3':'Hey Jude (The Beatles, « Hey Jude »)','3':'Swing Low, Sweet Chariot','4':'Petite musique de nuit (Mozart, début)','5':'Les Pierrafeu (générique, « Flint-stones »)'};
 const IV_C2=['♭2','2','♭3','3','4','♯4','♭5','5','♭6','6','♭7','7','8'];
 // Accords : [suffixe, [[degrés, demi-tons]...], chiffrage, nom]
 const CH={
@@ -342,6 +345,7 @@ const CH={
  '5':    [[[0,0],[4,7]],'1 5','power chord : fondamentale et quinte juste, sans tierce'],
 };
 const CH_C1=['','m','5']; // cycle 1 : majeur, mineur, power chord
+const CH_LV1=[['','m','5'],['','m','5','7']]; // cycle 1 : niveau 2 avec l'accord 7
 const CH_C2=['','m','dim','aug','sus4','Maj7','7','m7','m7♭5','dim7','6','m6','mMaj7','7sus4'];
 const CH_LV2=[['','m','dim','aug','sus4','sus2'],['Maj7','7','m7','m7♭5','dim7','6','m6','mMaj7','7sus4']]; // cycle 2 : niveau 1 triades, niveau 2 accords à 4 sons
 const chordNotes=(root,q)=>CH[q][0].map(([s,t])=>up(root,s,t));
@@ -648,28 +652,31 @@ function ivNew(){
   stopLoop();
   const mel=IVM==='mel'; $('ivWay').hidden=mel; $('ivMelKey').hidden=!mel; $('ivMelRow').hidden=!mel; $('melLv').hidden=!mel; $('melLvTxt').hidden=!mel;
   if(mel){ lvlSeg('melLv','mel',ivNew); $('melLvTxt').textContent=MLV[CYCLE][getLv('mel')-1].t; }
-  const chl=IVM==='chord'&&CYCLE===2; $('chLv').hidden=!chl; if(chl) lvlSeg('chLv','ch',ivNew);
+  const chl=IVM==='chord'; $('chLv').hidden=!chl; if(chl) lvlSeg('chLv','ch',ivNew);
   if(mel){ $('ivFb').hidden=true; $('ivPlay').hidden=false; return melNew(); }
   const ear=IVW==='ear';
   $('ivFb').hidden=true; $('ivPlay').hidden=!ear; $('ivStaff').hidden=ear;
   if(IVM==='int'){
     const set=CYCLE===1?IV_C1:IV_C2; let lo,hi,lab;
     do{ lab=rnd(set); const iv=IV.find(v=>v[2]===lab); lo=Object.assign({},rnd(CYCLE===1?ROOTS.slice(0,7):ROOTS)); hi=up(lo,iv[0],iv[1]); } while(Math.abs(hi.a)>1);
-    const harm=Math.random()<0.4;
-    IVC={kind:'int',lo,hi,lab,harm};
-    $('ivQ').textContent=ear?(harm?'Écoute les deux notes ensemble : quel est cet intervalle ?':'Écoute les deux notes l\'une après l\'autre : quel est cet intervalle ?'):'Lis la portée : quel est cet intervalle ?';
-    $('ivStaff').innerHTML=engraveCols(harm?[{notes:[lo,hi]}]:[{notes:[lo]},{notes:[hi]}],{colW:harm?150:90,aria:'Intervalle'});
+    const r=Math.random(), dir=r<0.3?'harm':r<0.65?'asc':'desc';
+    IVC={kind:'int',lo,hi,lab,dir,harm:dir==='harm'};
+    const sens={harm:'les deux notes ensemble',asc:'en montant',desc:'en descendant'}[dir];
+    $('ivQ').textContent=ear?`Écoute l'intervalle (${sens}) : quel est-il ?`:`Lis la portée : quel est cet intervalle (${sens}) ?`;
+    $('ivStaff').innerHTML=engraveCols(dir==='harm'?[{notes:[lo,hi]}]:dir==='asc'?[{notes:[lo]},{notes:[hi]}]:[{notes:[hi]},{notes:[lo]}],{colW:dir==='harm'?150:90,aria:'Intervalle'});
     const opts=set.filter(v=>!(v==='♭5'&&set.includes('♯4')));
     $('ivOpts').innerHTML=opts.map(v=>`<button type="button" class="choice" data-v="${v}">${v==='♯4'?'♯4 / ♭5':v}</button>`).join('');
     const right=x=>x.dataset.v===lab||(x.dataset.v==='♯4'&&lab==='♭5');
     $('ivOpts').querySelectorAll('button').forEach(b=>b.onclick=()=>{
       const ok=answer($('ivOpts'),b,right,'iv'+IVW);
-      const num=IV.find(v=>v[2]===lab)[0]+1, inv=9-num;
-      fb('ivFb',ok,ok?'Exact !':'Non.',`${fr(lo)} → ${fr(hi)} : <b>${lab}</b>, ${IVNAME[lab]} (${pitch(hi)-pitch(lo)} demi-tons).${num<8?` Renversé, il devient une ${['','','seconde','tierce','quarte','quinte','sixte','septième'][inv]} (règle des 9 : ${num} + ${inv} = 9).`:''}${ear?' La portée est affichée ci-dessus.':''}`);
+      const num=IV.find(v=>v[2]===lab)[0]+1, inv=9-num, key=lab==='♭5'?'♯4':lab;
+      const rep=dir==='desc'?IV_DESC[key]:IV_ASC[key];
+      const pair=dir==='desc'?`${fr(hi)} → ${fr(lo)}, en descendant`:dir==='asc'?`${fr(lo)} → ${fr(hi)}, en montant`:`${fr(lo)} et ${fr(hi)}, ensemble`;
+      fb('ivFb',ok,ok?'Exact !':'Non.',`${pair} : <b>${lab}</b>, ${IVNAME[lab]} (${pitch(hi)-pitch(lo)} demi-tons).${rep&&dir!=='harm'?` Repère ${dir==='desc'?'descendant':'ascendant'} : ${rep}.`:''}${num<8?` Renversé, il devient une ${['','','seconde','tierce','quarte','quinte','sixte','septième'][inv]} (règle des 9 : ${num} + ${inv} = 9).`:''}${ear?' La portée est affichée ci-dessus.':''}`);
       if(ear) $('ivStaff').hidden=false;
     });
   } else {
-    const set=CYCLE===1?CH_C1:CH_LV2[getLv('ch')-1]; let root,q,notes;
+    const set=(CYCLE===1?CH_LV1:CH_LV2)[getLv('ch')-1]; let root,q,notes;
     do{ q=rnd(set); root=Object.assign({},rnd(CYCLE===1?ROOTS.slice(0,9):ROOTS)); notes=chordNotes(root,q); } while(notes.some(n=>Math.abs(n.a)>1)||dpos(notes[notes.length-1])>dpos({l:2,o:5}));
     IVC={kind:'chord',root,q,notes};
     $('ivStaff').innerHTML=engraveCols([{notes}],{colW:170,aria:'Accord'});
@@ -690,7 +697,7 @@ function ivNew(){
   if(ear) ivPlay();
 }
 function ivPlay(){ if(IVM==='mel') return melPlay(); if(!IVC||IVW!=='ear') return;
-  if(IVC.kind==='int'){ if(IVC.harm) playNotes([{n:IVC.lo,t:0,d:1.6},{n:IVC.hi,t:0,d:1.6}]); else playNotes([{n:IVC.lo,t:0,d:0.9},{n:IVC.hi,t:0.95,d:1.3}]); }
+  if(IVC.kind==='int'){ if(IVC.harm) playNotes([{n:IVC.lo,t:0,d:1.6},{n:IVC.hi,t:0,d:1.6}]); else { const [a,b]=IVC.dir==='desc'?[IVC.hi,IVC.lo]:[IVC.lo,IVC.hi]; playNotes([{n:a,t:0,d:0.9},{n:b,t:0.95,d:1.3}]); } }
   else { const L=IVC.notes.map((n,i)=>({n,t:i*0.35,d:0.6})); IVC.notes.forEach(n=>L.push({n,t:IVC.notes.length*0.35+0.25,d:1.8})); playNotes(L); }
 }
 
@@ -728,11 +735,11 @@ const ORD=i=>i===0?'1re':`${i+1}e`;
 const wpick=obj=>{ const e=Object.entries(obj); let r=Math.random()*e.reduce((a,x)=>a+x[1],0); for(const [k,w] of e){ r-=w; if(r<0) return k; } return e[0][0]; };
 // Niveaux choisis par l'élève, par exercice et par cycle
 let LVL={}; try{ LVL=JSON.parse(localStorage.getItem('atelier-fm-niveaux')||'{}')||{}; }catch(e){}
-const LVMAX={mel:{1:2,2:3},dict:{1:2,2:3},ry:{1:2,2:3},ch:{1:1,2:2}};
+const LVMAX={mel:{1:2,2:3},dict:{1:2,2:3},ry:{1:2,2:3},ch:{1:2,2:2}};
 const getLv=ex=>Math.min(LVL[ex+CYCLE]||1,LVMAX[ex][CYCLE]);
-const LVNAMES={ch:['Niveau 1 : accords à 3 sons','Niveau 2 : accords à 4 sons']};
+const LVNAMES={ch:{1:['Niveau 1 : majeur, mineur, power chord','Niveau 2 : + accord 7'],2:['Niveau 1 : accords à 3 sons','Niveau 2 : accords à 4 sons']}};
 function lvlSeg(id,ex,onChange){ const el=$(id), m=LVMAX[ex][CYCLE], cur=getLv(ex);
-  el.innerHTML=[...Array(m).keys()].map(i=>`<button type="button" data-l="${i+1}" aria-pressed="${i+1===cur}">${(LVNAMES[ex]&&LVNAMES[ex][i])||'Niveau '+(i+1)}</button>`).join('');
+  el.innerHTML=[...Array(m).keys()].map(i=>`<button type="button" data-l="${i+1}" aria-pressed="${i+1===cur}">${(LVNAMES[ex]&&LVNAMES[ex][CYCLE][i])||'Niveau '+(i+1)}</button>`).join('');
   el.querySelectorAll('button').forEach(b=>b.onclick=()=>{ LVL[ex+CYCLE]=+b.dataset.l; try{localStorage.setItem('atelier-fm-niveaux',JSON.stringify(LVL));}catch(e){} lvlSeg(id,ex,onChange); onChange(); }); }
 // indice dans la gamme (0 = tonique ; négatif = en dessous) → note
 function melNote(cfg,i){ const sc=MATS[cfg.mat].sc, L=sc.length, oc=Math.floor(i/L), [st,se]=sc[((i%L)+L)%L];
