@@ -25,6 +25,7 @@ L'appli fonctionne ensuite **hors ligne**, sons compris (seuls les liens YouTube
 | **Degrés et grilles** | Degrés, cadences, dictée de degrés à l'oreille (au piano, tempo réglable, plusieurs niveaux), analyse de grille, transposition, grilles de vrais morceaux. Les enchaînements sont générés au hasard selon les règles de l'harmonie tonale |
 | **Rythme et batterie** | Compter une mesure (1 i et a, 1 ti ti ; plusieurs niveaux, 3/4 et 12/8 au cycle 2), reconnaître un groove ou une clave, passer d'une partition de batterie à la grille et inversement. Les grooves varient à chaque fois |
 | **Écoute** | Morceaux à écouter (lien direct vers la vidéo YouTube, officielle quand elle existe) : style, instrument, son de guitare, clavier, effet, placement rythmique, type de chant |
+| **Chant** | Chanter des intervalles, des gammes (majeure, mineures, pentatoniques, blues, modes) et des arpèges d'accords : la note de départ est jouée au piano, l'atelier écoute la voix au micro et valide chaque note tenue juste. Réglage de la tessiture (voix aiguë, médium, ténor, grave) et de la tolérance. Le son du micro est analysé dans la page, jamais enregistré ni envoyé |
 
 Un bouton **Cycle 1 / Cycle 2** adapte toutes les questions au niveau.
 

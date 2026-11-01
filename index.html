@@ -92,6 +92,13 @@ button.chordopt{font-family:var(--chord);font-weight:700;font-size:1.05rem}
 .grid button.cell.koc{background:color-mix(in srgb,var(--red) 30%,transparent)}
 .grid button.cell.miss{color:var(--orange);box-shadow:inset 0 0 0 2px var(--orange)}
 #snd{color:var(--orange)}
+.vxpanel{display:flex;flex-wrap:wrap;gap:12px 28px;align-items:center}
+.vxpanel b{display:block;font-family:var(--chord);font-size:1.6rem}
+.vxmeter{flex:1 1 260px;min-width:220px}
+.vxbar{position:relative;height:22px;border-radius:99px;background:var(--paper);border:1px solid var(--line);overflow:hidden;--tol:8.75%}
+.vxbar::before{content:"";position:absolute;top:0;bottom:0;left:calc(50% - var(--tol));width:calc(2 * var(--tol));background:color-mix(in srgb,var(--green) 25%,transparent)}
+.vxbar::after{content:"";position:absolute;top:0;bottom:0;left:50%;width:2px;background:var(--muted)}
+.vxbar i{position:absolute;top:3px;width:14px;height:14px;margin-left:-7px;border-radius:50%;background:var(--orange);left:50%;transition:left .08s linear}
 .fb{margin-top:14px;padding:12px 16px;border-radius:8px;border-left:5px solid var(--line);background:var(--paper);min-height:1.5em}
 .fb.good{border-left-color:var(--green)}
 .fb.bad{border-left-color:var(--red)}
@@ -155,6 +162,7 @@ button.chordopt{font-family:var(--chord);font-weight:700;font-size:1.05rem}
     <a href="#degres">Degrés et grilles</a>
     <a href="#rythme">Rythme et batterie</a>
     <a href="#ecoute">Écoute</a>
+    <a href="#chant">Chant</a>
   </nav>
 </header>
 <main>
@@ -284,6 +292,41 @@ button.chordopt{font-family:var(--chord);font-weight:700;font-size:1.05rem}
   <div class="card" id="ryClaveC1" hidden><p style="margin:0">Les claves sont au programme du cycle 2. Passe en <b>Cycle 2</b> en haut de la page pour t'entraîner.</p></div>
 </section>
 
+<section class="panel" id="p-chant" aria-labelledby="h-vx">
+  <h2 id="h-vx">Chant</h2>
+  <p class="lead">Écoute la note de départ au piano, puis chante : l'atelier écoute ta voix au micro et valide chaque note tenue juste. Chante dans ta tessiture, à l'octave qui te convient. Le son du micro est analysé dans la page : il n'est ni enregistré ni envoyé.</p>
+  <div class="sub" role="group" aria-label="Exercice">
+    <button type="button" id="vxModeInt" aria-pressed="true">Intervalles</button>
+    <button type="button" id="vxModeGam" aria-pressed="false">Gammes</button>
+    <button type="button" id="vxModeArp" aria-pressed="false">Arpèges</button>
+  </div>
+  <div class="card stack">
+    <div class="row">
+      <label class="meta">Ma voix <select id="vxTess"></select></label>
+      <label class="meta">Justesse <select id="vxTol"></select></label>
+    </div>
+    <div class="sub" role="group" aria-label="Niveau" id="vxLv" style="margin:0"></div>
+    <div class="meta" id="vxLvTxt"></div>
+    <div class="qtext" id="vxQ" style="margin:0"></div>
+    <div class="staffwrap" id="vxStaff"></div>
+    <div class="vxpanel">
+      <div><span class="meta">Note attendue</span><b id="vxTarget">—</b></div>
+      <div><span class="meta">Tu chantes</span><b id="vxNow">—</b></div>
+      <div class="vxmeter"><div id="vxBar" class="vxbar"><i id="vxMark"></i></div><span class="meta" id="vxCents"></span></div>
+    </div>
+    <div class="row">
+      <button id="vxStart" class="primary" type="button">🎤 Écouter la note de départ et chanter</button>
+      <button id="vxStop" class="ghost" type="button" hidden>■ Arrêter le micro</button>
+      <button id="vxHelp" class="ghost" type="button">Réentendre la note attendue</button>
+      <button id="vxAll" class="ghost" type="button">Écouter tout l'exercice</button>
+      <button id="vxSkip" class="ghost" type="button">Je passe</button>
+      <span class="meta" id="vxScore"></span>
+    </div>
+    <div class="fb" id="vxFb" hidden></div>
+    <div class="row"><button id="vxNext" class="primary" type="button">Exercice suivant</button></div>
+  </div>
+</section>
+
 <section class="panel" id="p-ecoute" aria-labelledby="h-st">
   <h2 id="h-st">Écoute</h2>
   <p class="lead">Écoute le morceau (le lien ouvre la vidéo sur YouTube), puis réponds. On te demande tour à tour le style, un instrument, un son de guitare, un clavier, un effet, le placement rythmique ou le type de chant.</p>
@@ -407,7 +450,7 @@ function engraveCols(cols,opt={}){
       const x=x0+(shift?13:0);
       for(let q=BOT-2;q>=p;q-=2){const yy=top+4*SP-(q-BOT)*H;o.push(`<line x1="${x0-12}" y1="${yy}" x2="${x0+12+(shift?13:0)}" y2="${yy}" stroke="${INK}"/>`);}
       for(let q=BOT+10;q<=p;q+=2){const yy=top+4*SP-(q-BOT)*H;o.push(`<line x1="${x0-12}" y1="${yy}" x2="${x0+12+(shift?13:0)}" y2="${yy}" stroke="${INK}"/>`);}
-      o.push(`<ellipse cx="${x}" cy="${y}" rx="7" ry="4.6" fill="none" stroke="${INK}" stroke-width="2.6" transform="rotate(-15 ${x} ${y})"/>`);
+      o.push(`<ellipse cx="${x}" cy="${y}" rx="7" ry="4.6" fill="none" ${col.ok?'style="stroke:var(--green)"':col.cur?'style="stroke:var(--accent)"':`stroke="${INK}"`} stroke-width="2.6" transform="rotate(-15 ${x} ${y})"/>`);
       if(n.a){
         let c=0; while(accCols.some(a=>a.c===c&&Math.abs(a.p-p)<6)) c++; accCols.push({c,p});
         const ax=x0-20-c*11;
@@ -415,7 +458,7 @@ function engraveCols(cols,opt={}){
         else o.push(glyph(n.a===1?'sharp':'flat',ax,y+(n.a===-1?3:5),15));
       }
     });
-    if(col.label) o.push(`<text x="${x0}" y="${top+4*SP+44}" text-anchor="middle" font-family="${SANS}" font-size="13" font-weight="700" ${MUTED}>${col.label}</text>`);
+    if(col.label) o.push(`<text x="${x0}" y="${top+4*SP+44}" text-anchor="middle" font-family="${SANS}" font-size="13" font-weight="700" ${col.ok?'style="fill:var(--green)"':col.cur?'style="fill:var(--accent)"':MUTED}>${col.label}</text>`);
   });
   return `<svg xmlns="http://www.w3.org/2000/svg" style="width:100%;height:auto;max-width:${Math.round(W*1.7)}px" viewBox="0 0 ${W} ${Ht}" role="img" aria-label="${opt.aria||'Portée'}">${o.join('')}</svg>`;
 }
@@ -615,7 +658,7 @@ function bump(k,ok){const v=sc(k); v[1]++; if(ok) v[0]++; try{localStorage.setIt
 function showScores(){
   const tot=Object.values(SC[CYCLE]).reduce((a,b)=>[a[0]+b[0],a[1]+b[1]],[0,0]);
   $('globalScore').innerHTML=`Cycle ${CYCLE} · réponses justes : <b>${tot[0]}</b> sur <b>${tot[1]}</b>`;
-  [['ivScore',['ivread','ivear','mel','meldom']],['dgScore',['dg','dict','ana','tr']],['ryScore',['ry']],['grScore',['gr']],['clScore',['cl']],['pgScore',['pg']],['gpScore',['gp']],['stScore',['st']]].forEach(([id,ks])=>{const v=ks.reduce((a,k)=>{const x=sc(k);return [a[0]+x[0],a[1]+x[1]];},[0,0]); $(id).textContent=`Score : ${v[0]} / ${v[1]}`;});
+  [['ivScore',['ivread','ivear','mel','meldom']],['dgScore',['dg','dict','ana','tr']],['ryScore',['ry']],['grScore',['gr']],['clScore',['cl']],['pgScore',['pg']],['gpScore',['gp']],['stScore',['st']],['vxScore',['vx']]].forEach(([id,ks])=>{const v=ks.reduce((a,k)=>{const x=sc(k);return [a[0]+x[0],a[1]+x[1]];},[0,0]); $(id).textContent=`Score : ${v[0]} / ${v[1]}`;});
 }
 function answer(box,btn,isRight,key){ // marque les boutons, renvoie ok
   const ok=isRight(btn); bump(key,ok);
@@ -933,6 +976,115 @@ function engraveMelody(mel,sk,o2){
   });
   return `<svg xmlns="http://www.w3.org/2000/svg" style="width:100%;height:auto;max-width:${Math.round(W*1.45)}px" viewBox="0 0 ${W} ${Ht}" role="img" aria-label="Mélodie">${o.join('')}</svg>`;
 }
+
+
+// ===== Module 6 : Chant (intervalles, gammes, arpèges), avec détection de la note chantée au micro =====
+// Rien n'est enregistré ni envoyé : le son du micro est analysé dans la page, puis oublié.
+const VX_TESS={sop:{t:'Voix aiguë (enfant, soprano)',r:[60,76]},alto:{t:'Voix médium (alto, voix qui mue)',r:[55,71]},ten:{t:'Voix d\'homme aiguë (ténor)',r:[48,64]},bas:{t:'Voix d\'homme grave (baryton, basse)',r:[43,59]}};
+const VX_TOL={large:{t:'indulgente (± 50 cents)',c:50},normal:{t:'normale (± 35 cents)',c:35},strict:{t:'stricte (± 20 cents)',c:20}};
+const VX_LV={
+ int:{1:[{t:'Niveau 1 : secondes, tierces, quarte, quinte, en montant',set:['2','♭3','3','4','5'],desc:0},{t:'Niveau 2 : + sixte et octave, en montant et en descendant',set:IV_C1,desc:1}],
+      2:[{t:'Niveau 1 : tous les intervalles, en montant',set:IV_C2,desc:0},{t:'Niveau 2 : tous les intervalles, en montant et en descendant',set:IV_C2,desc:1}]},
+ gam:{1:[{t:'Niveau 1 : gamme majeure et pentatoniques',mats:['maj','pmaj','pmin']},{t:'Niveau 2 : + mineure naturelle et gamme blues',mats:['maj','min','pmaj','pmin','blues']}],
+      2:[{t:'Niveau 1 : les trois gammes mineures et la gamme blues',mats:['min','harm','melo','blues']},{t:'Niveau 2 : les modes',mats:['dor','phr','lyd','mixo','min']}]},
+ arp:{1:[{t:'Niveau 1 : majeur, mineur',set:['','m']},{t:'Niveau 2 : + accord 7',set:['','m','7']}],
+      2:[{t:'Niveau 1 : triades (majeure, mineure, diminuée, augmentée, sus4)',set:['','m','dim','aug','sus4']},{t:'Niveau 2 : accords à 4 sons',set:['Maj7','7','m7','m7♭5','dim7','6','m6','mMaj7']}]}};
+MATS.melo={lab:t=>`${t} mineur mélodique`,sc:[[0,0],[1,2],[2,3],[3,5],[4,7],[5,9],[6,11]],ton:[['A','C']],ch:'m'};
+let VXM='int', VX=null, VXS={tess:'alto',tol:'normal'};
+try{ const v=JSON.parse(localStorage.getItem('atelier-fm-chant')||'{}'); if(VX_TESS[v.tess]) VXS.tess=v.tess; if(VX_TOL[v.tol]) VXS.tol=v.tol; }catch(e){}
+const vxSave=()=>{ try{localStorage.setItem('atelier-fm-chant',JSON.stringify(VXS));}catch(e){} };
+const vxLvKey=()=>'vx'+VXM;
+['vxint','vxgam','vxarp'].forEach(k=>LVMAX[k]={1:2,2:2});
+function vxNew(){
+  vxStopListen(); stopLoop();
+  lvlSeg('vxLv',vxLvKey(),vxNew);
+  const lv=VX_LV[VXM][CYCLE][getLv(vxLvKey())-1]; $('vxLvTxt').textContent=lv.t;
+  let seq=null, title='', names=null;
+  for(let tries=0;tries<200&&!seq;tries++){
+    if(VXM==='int'){
+      const lab=rnd(lv.set), iv=IV.find(v=>v[2]===lab), lo=Object.assign({},rnd(CYCLE===1?ROOTS.slice(0,7):ROOTS)), hi=up(lo,iv[0],iv[1]);
+      if(Math.abs(hi.a)>1) continue; const desc=lv.desc&&Math.random()<0.5;
+      seq=desc?[hi,lo]:[lo,hi]; title=`Chante une <b>${IVNAME[lab]}</b> (${lab}) en ${desc?'descendant':'montant'}, à partir de ${fr(seq[0])}.`;
+    } else if(VXM==='gam'){
+      const mat=rnd(lv.mats), M=MATS[mat], ton=rnd(['C','D','E','F','G','A','B♭']), sig={C:'C'}, cfg={mat,ton,sig:'C'};
+      seq=[...Array(M.sc.length+1).keys()].map(i=>melNote(cfg,i));
+      title=`Chante la gamme : <b>${M.lab(ton)}</b>, en montant.`;
+    } else {
+      const q=rnd(lv.set), root=Object.assign({},rnd(CYCLE===1?ROOTS.slice(0,9):ROOTS)), notes=chordNotes(root,q).concat([up(root,7,12)]);
+      seq=notes; title=`Chante l'arpège de <b>${en(root)}${q}</b> (${QNAME[q]}, ${CH[q][1]} puis l'octave), en montant.`;
+    }
+    if(seq&&(seq.some(n=>Math.abs(n.a)>1)||seq.some(n=>dpos(n)<26||dpos(n)>42))) seq=null;
+  }
+  // octave jouée : celle qui fait tenir l'exercice dans la tessiture de l'élève
+  const w=seq.map(pitch), [lo,hi]=VX_TESS[VXS.tess].r; let best=0,bp=1e9;
+  for(let k=-3;k<=1;k++){ const a=Math.min(...w)+12*k, b=Math.max(...w)+12*k, p=Math.max(0,lo-a)+Math.max(0,b-hi)+Math.abs((a+b)/2-(lo+hi)/2)*0.01; if(p<bp){bp=p;best=k;} }
+  VX={seq,off:w.map(x=>x-w[0]),start:w[0]+12*best,i:0,ref:null,hold:0,done:false,fails:0};
+  $('vxQ').innerHTML=title; $('vxFb').hidden=true; $('vxNow').textContent='—'; $('vxTarget').textContent=fr(seq[0]); vxDraw(); vxMeter(null);
+  $('vxStart').hidden=false; $('vxStop').hidden=true;
+}
+function vxDraw(){ if(!VX) return; $('vxStaff').innerHTML=engraveCols(VX.seq.map((n,i)=>({notes:[n],label:i<VX.i?'✓':i===VX.i&&!VX.done?'▲':'',ok:i<VX.i,cur:i===VX.i&&!VX.done})),{colW:VX.seq.length>5?62:90,aria:'Notes à chanter'}); }
+// ---- Détection de hauteur : autocorrélation sur la plage de la voix (70 à 1100 Hz) ----
+let VXA=null; // {stream, src, an, buf, raf, last, hist, muteUntil}
+function vxPitch(buf,sr){
+  let rms=0; for(let i=0;i<buf.length;i++) rms+=buf[i]*buf[i]; rms=Math.sqrt(rms/buf.length); if(rms<0.012) return null;
+  const minL=Math.floor(sr/1100), maxL=Math.min(Math.floor(sr/70),buf.length>>1), n=buf.length-maxL, r=new Float32Array(maxL+2);
+  let r0=0; for(let j=0;j<n;j++) r0+=buf[j]*buf[j];
+  let rmax=0; for(let L=minL;L<=maxL+1;L++){ let s=0; for(let j=0;j<n;j++) s+=buf[j]*buf[j+L]; r[L]=s; if(L<=maxL&&s>rmax) rmax=s; }
+  if(rmax<0.45*r0) return null; // son trop peu périodique : pas une note tenue
+  let L=minL; for(;L<=maxL;L++){ if(r[L]>=0.9*rmax&&r[L]>=r[L-1]&&r[L]>=r[L+1]) break; } // premier pic : évite les erreurs d'octave
+  const a=r[L-1],b=r[L],c=r[L+1], d=(a-2*b+c), shift=d?0.5*(a-c)/d:0;
+  return sr/(L+shift);
+}
+const midiOf=f=>69+12*Math.log2(f/440);
+async function vxStart(){
+  if(!VX) return; const ac=await ready(); if(!ac) return;
+  if(!navigator.mediaDevices||!navigator.mediaDevices.getUserMedia){ fb('vxFb',null,'Micro indisponible','Ton navigateur ne donne pas accès au micro ici. Ouvre l\'atelier sur le site ou dans l\'appli installée (la version dans Claude bloque le micro).'); return; }
+  if(!VXA){
+    try{
+      const stream=await navigator.mediaDevices.getUserMedia({audio:{echoCancellation:false,noiseSuppression:false,autoGainControl:false}});
+      const src=ac.createMediaStreamSource(stream), an=ac.createAnalyser(); an.fftSize=2048; src.connect(an);
+      VXA={stream,src,an,buf:new Float32Array(2048),raf:null,last:0,hist:[],muteUntil:0};
+    }catch(e){ fb('vxFb',null,'Accès au micro refusé','Autorise le micro pour cette page (icône à gauche de l\'adresse, ou réglages du navigateur), puis réessaie. Le son n\'est ni enregistré ni envoyé. Dans la version de l\'atelier ouverte dans Claude, le micro est toujours bloqué : utilise le site ou l\'appli installée.'); return; }
+  }
+  $('vxStart').hidden=true; $('vxStop').hidden=false; $('vxFb').hidden=true;
+  vxPlayRef(0);
+  const loop=t=>{ if(!VXA) return; VXA.raf=requestAnimationFrame(loop); if(t-VXA.last<45) return; const dt=Math.min(0.2,(t-VXA.last)/1000); VXA.last=t; vxTick(dt); };
+  VXA.raf=requestAnimationFrame(loop);
+}
+function vxStopListen(){ if(VXA){ cancelAnimationFrame(VXA.raf); try{VXA.stream.getTracks().forEach(t=>t.stop());}catch(e){} try{VXA.src.disconnect();}catch(e){} VXA=null; } if($('vxStart')){ $('vxStart').hidden=false; $('vxStop').hidden=true; } }
+// note attendue (MIDI) : la première dans l'octave jouée ; ensuite, relative à la note réellement chantée au départ
+const vxTargetMidi=()=>VX.i===0?VX.start:VX.ref+VX.off[VX.i];
+function vxPlayRef(i){ if(!VX) return; const m=i===0||VX.ref===null?VX.start+VX.off[i]:Math.round(VX.ref)+VX.off[i]; if(VXA) VXA.muteUntil=performance.now()+1500; playNotes([{m,t:0,d:1.2}]); }
+function vxTick(dt){
+  if(!VX||VX.done) return;
+  if(performance.now()<VXA.muteUntil){ vxMeter(null); return; } // on n'écoute pas pendant que le piano joue
+  VXA.an.getFloatTimeDomainData(VXA.buf);
+  const f=vxPitch(VXA.buf,VXA.an.context.sampleRate);
+  if(!f){ VXA.hist=[]; VX.hold=Math.max(0,VX.hold-dt); vxMeter(null); return; }
+  VXA.hist.push(midiOf(f)); if(VXA.hist.length>5) VXA.hist.shift();
+  const m=VXA.hist.slice().sort((a,b)=>a-b)[VXA.hist.length>>1];
+  let tg=vxTargetMidi();
+  if(VX.i===0) tg+=12*Math.round((m-tg)/12); // la note de départ peut être chantée à n'importe quelle octave
+  const cents=(m-tg)*100, tol=VX_TOL[VXS.tol].c;
+  $('vxNow').textContent=`${fr(nameOfMidi(Math.round(m)))}`;
+  vxMeter(Math.abs(cents)>200?(cents>0?200:-200):cents,tol);
+  if(Math.abs(cents)<=tol){ VX.hold+=dt; if(VX.hold>=0.45){ if(VX.i===0) VX.ref=tg; VX.i++; VX.hold=0; VXA.hist=[];
+      if(VX.i>=VX.seq.length){ VX.done=true; bump('vx',true); vxDraw(); vxMeter(null); fb('vxFb',true,'Bravo !',`Tout est juste : ${VX.seq.map(fr).join(' – ')}.`); vxStopListen(); $('vxStart').hidden=true; return; }
+      $('vxTarget').textContent=fr(VX.seq[VX.i]); vxDraw(); } }
+  else VX.hold=Math.max(0,VX.hold-dt*0.5);
+}
+// nom d'une note à partir de son numéro MIDI (dièses)
+function nameOfMidi(m){ const pc=((m%12)+12)%12, map=[[0,0],[0,1],[1,0],[1,1],[2,0],[3,0],[3,1],[4,0],[4,1],[5,0],[5,1],[6,0]][pc]; return {l:map[0],a:map[1],o:Math.floor(m/12)-1}; }
+function vxMeter(c,tol){
+  const el=$('vxBar'), mk=$('vxMark');
+  if(c===null||c===undefined){ mk.style.opacity='0.25'; mk.style.left='50%'; $('vxCents').textContent=''; return; }
+  const x=50+c/200*50; mk.style.opacity='1'; mk.style.left=x+'%';
+  const ok=Math.abs(c)<=tol; mk.style.background=ok?'var(--green)':'var(--orange)';
+  $('vxCents').textContent=ok?'juste':c>0?'trop haut':'trop bas';
+  el.style.setProperty('--tol',(tol/200*50)+'%');
+}
+function vxSkip(){ if(!VX||VX.done) return; VX.done=true; bump('vx',false); vxStopListen(); vxDraw(); fb('vxFb',false,'Exercice passé',`Les notes étaient : ${VX.seq.map(fr).join(' – ')}. Écoute-les, puis recommence ou passe à l'exercice suivant.`); }
+function vxListenAll(){ if(!VX) return; const base=VX.ref!==null?Math.round(VX.ref):VX.start; if(VXA) VXA.muteUntil=performance.now()+VX.seq.length*700+800; playNotes(VX.off.map((o,i)=>({m:base+o,t:i*0.65,d:0.6}))); }
 
 // ===== Module 3 : Degrés et grilles =====
 // Degrés : [degrés de la gamme au-dessus de la tonique, demi-tons, qualité]
@@ -1267,11 +1419,12 @@ function stList(){
 }
 
 // ===== Navigation, cycle, thème =====
-const VIEWS=['quiz','intervalles','degres','rythme','ecoute'];
+const VIEWS=['quiz','intervalles','degres','rythme','ecoute','chant'];
 function route(){
   let v=location.hash.slice(1); if(v==='styles') v='ecoute'; if(!VIEWS.includes(v)) v='quiz';
   VIEWS.forEach(x=>$('p-'+x).classList.toggle('on',x===v));
   document.querySelectorAll('#tabs a').forEach(a=>a.setAttribute('aria-current',a.getAttribute('href')==='#'+v?'page':'false'));
+  if(v!=='chant') vxStopListen();
   stopLoop();
 }
 function ryShow(){
@@ -1281,7 +1434,7 @@ function ryShow(){
 }
 function setCycle(c){
   CYCLE=c; try{localStorage.setItem('atelier-fm-cycle',String(c));}catch(e){}
-  seg([['c1',1],['c2',2]],c); quizStart(); ivNewQuiet(); dgNewQuiet(); ryNew(); grNew(); clNew(); pgNew(); gpNew(); ryShow(); STC='all'; stStart(); showScores();
+  seg([['c1',1],['c2',2]],c); quizStart(); ivNewQuiet(); dgNewQuiet(); ryNew(); grNew(); clNew(); pgNew(); gpNew(); ryShow(); vxNew(); STC='all'; stStart(); showScores();
 }
 function setTheme(t){ document.documentElement.setAttribute('data-theme',t); try{localStorage.setItem('atelier-fm-theme',t);}catch(e){}
   const b=$('theme'); b.textContent=t==='dark'?'☀ Clair':'☾ Sombre'; b.setAttribute('aria-label',t==='dark'?'Passer en thème clair':'Passer en thème sombre'); }
@@ -1311,6 +1464,13 @@ function start(){
   $('pgNext').onclick=pgNew; $('pgCheck').onclick=pgCheck; $('pgMine').onclick=pgMine; $('pgRight').onclick=pgRight; $('pgStop').onclick=stopLoop;
   $('gpNext').onclick=gpNew; $('gpPlay').onclick=gpPlay; $('gpStop').onclick=stopLoop;
   $('stNext').onclick=()=>{STQ.i++;stShow();};
+  const vxm=[['vxModeInt','int'],['vxModeGam','gam'],['vxModeArp','arp']];
+  vxm.forEach(([id,v])=>$(id).onclick=()=>{VXM=v;seg(vxm,v);vxNew();});
+  $('vxTess').innerHTML=Object.entries(VX_TESS).map(([k,v])=>`<option value="${k}">${v.t}</option>`).join(''); $('vxTess').value=VXS.tess;
+  $('vxTol').innerHTML=Object.entries(VX_TOL).map(([k,v])=>`<option value="${k}">${v.t}</option>`).join(''); $('vxTol').value=VXS.tol;
+  $('vxTess').onchange=e=>{VXS.tess=e.target.value;vxSave();vxNew();}; $('vxTol').onchange=e=>{VXS.tol=e.target.value;vxSave();};
+  $('vxStart').onclick=vxStart; $('vxStop').onclick=vxStopListen; $('vxNext').onclick=vxNew; $('vxSkip').onclick=vxSkip;
+  $('vxHelp').onclick=()=>{ if(VX&&!VX.done) vxPlayRef(VX.i); }; $('vxAll').onclick=vxListenAll;
   setCycle(CYCLE); route(); window.addEventListener('hashchange',route);
   loadSamples();
   // Appli installable (PWA) : fonctionnement hors ligne et bouton « Installer l'appli » quand le navigateur le propose
