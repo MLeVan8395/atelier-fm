@@ -23,11 +23,17 @@ L'appli fonctionne ensuite **hors ligne**, sons compris (seules les vidéos YouT
 | **Quiz de cours** | Toutes les notions des deux livrets (plus de 170 questions au cycle 1, près de 290 au cycle 2), 20 tirées au hasard à chaque série, avec une explication pour chaque réponse |
 | **Intervalles et accords** | Intervalles ascendants, descendants et harmoniques, accords par niveaux (cycle 1 : majeur, mineur, power chord, puis accord 7 ; cycle 2 : triades, puis accords à 4 sons ; niveau 3 aux deux cycles : accords sur basse, renversements et basses étrangères comme D/C ou F/G, et au cycle 2 renversements des accords à 4 sons, sur grand-portée), **à la lecture** (portée seule) ou **à l'oreille** (son seul), jamais les deux en même temps ; **dictée mélodique** : une courte mélodie générée au hasard sur un matériau du livret (gammes majeure et mineures, pentatoniques, gamme blues, modes), à retrouver parmi trois partitions. Niveaux au choix (2 au cycle 1, 3 au cycle 2), repère sonore au choix (bourdon, accord, accompagnement), swing, 3/4 et 12/8, triolets et doubles croches, dominantes secondaires entendues dans la mélodie |
 | **Degrés et grilles** | Degrés, cadences, dictée de degrés à l'oreille (au piano, tempo réglable, plusieurs niveaux), analyse de grille, transposition, grilles de vrais morceaux. Les enchaînements sont générés au hasard selon les règles de l'harmonie tonale |
-| **Rythme et batterie** | Compter une mesure (1 i et a, 1 ti ti ; plusieurs niveaux, 3/4 et 12/8 au cycle 2), reconnaître un groove ou une clave, passer d'une partition de batterie à la grille et inversement. Les grooves varient à chaque fois |
+| **Rythme et batterie** | Compter une mesure (1 i et a, 1 ti ti ; plusieurs niveaux, 3/4 et 12/8 au cycle 2), **dictée de rythme** (décompte puis rythme aux claves, 1 ou 2 mesures : choisir la bonne partition ou écrire le rythme temps par temps), reconnaître un groove ou une clave, passer d'une partition de batterie à la grille et inversement. Les grooves varient à chaque fois |
 | **Écoute** | Morceaux à écouter (vidéo YouTube intégrée dans la question, officielle quand elle existe) : style, instrument, son de guitare, clavier, effet, placement rythmique, type de chant |
 | **Chant** | Chanter des intervalles, des gammes (majeure, mineures, pentatoniques, blues, modes) et des arpèges d'accords : la note de départ est jouée au piano, l'atelier écoute la voix au micro et valide chaque note tenue juste. Réglage de la tessiture (voix aiguë, médium, ténor, grave) et de la tolérance. Le son du micro est analysé dans la page, jamais enregistré ni envoyé |
 
 Un bouton **Cycle 1 / Cycle 2** adapte toutes les questions au niveau.
+
+Deux modes :
+- **Entraînement** : on avance à son rythme, avec un bouton **↺ Recommencer** qui redonne exactement la même question (même note, même rythme, même exercice de chant).
+- **📝 Mode note** : l'élève tape son prénom, puis fait une série de 20 questions, une seule réponse par question, et obtient une note sur 20 avec un bilan par type de question. Deux choix : une série sur l'exercice en cours (y compris le chant, avec 10 secondes par note), ou une évaluation générale qui mélange cours, intervalles, accords, degrés, rythme et écoute. À la fin, **Retravailler mes erreurs** rejoue les questions ratées en mode entraînement. La note n'est pas enregistrée : elle s'affiche à l'écran, avec le prénom, la date et l'heure, pour que le professeur la relève.
+
+Chaque bonne réponse est saluée par un message de félicitations (et une série de bonnes réponses d'affilée est fêtée) ; chaque erreur reçoit un encouragement.
 
 ## Principes
 

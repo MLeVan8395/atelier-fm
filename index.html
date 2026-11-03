@@ -95,6 +95,15 @@ button.chordopt{font-family:var(--chord);font-weight:700;font-size:1.05rem}
 .video{position:relative;width:100%;max-width:640px;aspect-ratio:16/9;border-radius:10px;overflow:hidden;background:#000;border:1px solid var(--line)}
 .video iframe{position:absolute;inset:0;width:100%;height:100%;border:0}
 a.big{display:inline-block;font-size:1rem;line-height:1.3;font-family:var(--body);background:var(--accent);color:var(--sheet);font-weight:700;padding:10px 18px;border-radius:8px;text-decoration:none}
+.rdopts{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,420px),1fr));gap:10px}
+.rdopts.wide{grid-template-columns:1fr}
+.rdopts button{padding:6px 8px;background:var(--sheet)}
+.rdpal{display:flex;flex-wrap:wrap;gap:8px}
+.rdpal button{padding:2px 4px;width:96px;background:var(--sheet)}
+.rdcount{font-weight:700;font-size:1.4rem;color:var(--accent);min-width:2ch}
+#rdUser{overflow-x:auto}
+#rdUser svg{min-width:min(560px,calc(150px*var(--nb,4)))}
+#rdUser svg [data-b]{cursor:pointer}
 .vfall{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;padding:16px;text-align:center;color:#ddd;font-size:15px}
 .vxpanel{display:flex;flex-wrap:wrap;gap:12px 28px;align-items:center}
 .vxpanel b{display:block;font-family:var(--chord);font-size:1.6rem}
@@ -142,6 +151,35 @@ a.big{display:inline-block;font-size:1rem;line-height:1.3;font-family:var(--body
 .home b{font-family:var(--body);font-size:1.15rem;display:block}
 .home small{color:var(--muted)}
 @media (max-width:520px){h1{font-size:1.6rem}.card{padding:14px}.big{font-size:1.6rem}}
+
+#serBar{position:sticky;top:0;z-index:30;background:var(--sheet);border-bottom:2px solid var(--accent);box-shadow:0 4px 14px rgba(0,0,0,.18)}
+.serin{max-width:1100px;margin:0 auto;padding:10px 20px;display:grid;grid-template-columns:auto 1fr auto;gap:8px 18px;align-items:center}
+.serin .progress{margin:0}
+.sertxt{font-size:.98rem}
+.serbtns{margin:0;gap:8px}
+@media (max-width:700px){.serin{grid-template-columns:1fr}}
+body.locked #tabs,body.locked .panel .sub[role=group],body.locked .panel .seg,body.locked header .seg:not(#modeSeg),body.locked .trainonly{display:none!important}
+body.locked .lockhide{display:none!important}
+.dlg{position:fixed;inset:0;z-index:50;background:rgba(0,0,0,.55);display:flex;align-items:flex-start;justify-content:center;padding:6vh 14px;overflow:auto}
+.dlg[hidden]{display:none}
+.dlgbox{background:var(--sheet);border:1px solid var(--line);border-radius:14px;max-width:560px;width:100%;padding:22px;display:flex;flex-direction:column;gap:14px}
+.dlgbox h3{margin:0;font-size:1.3rem}
+.dlgbox input{font:inherit;padding:10px 12px;border-radius:8px;border:1px solid var(--line);background:var(--paper,var(--sheet));color:var(--ink);width:100%;box-sizing:border-box}
+.dlgbox .choice2{display:flex;flex-direction:column;align-items:flex-start;gap:3px;text-align:left;padding:12px 14px;width:100%}
+.dlgbox .choice2 small{color:var(--muted);font-weight:400}
+.note20{font-size:3.4rem;font-weight:800;line-height:1;color:var(--accent)}
+.note20 small{font-size:1.3rem;color:var(--muted)}
+.bilan{width:100%;border-collapse:collapse;font-size:.95rem}
+.bilan td{padding:5px 4px;border-bottom:1px solid var(--line)}
+.bilan td:last-child{text-align:right;font-weight:700;white-space:nowrap}
+#confetti{position:fixed;inset:0;pointer-events:none;z-index:60;overflow:hidden}
+#confetti i{position:absolute;top:-20px;width:9px;height:14px;border-radius:2px;opacity:.95}
+@media (prefers-reduced-motion:no-preference){
+  #confetti i{animation:fall linear forwards}
+  @keyframes fall{to{transform:translateY(110vh) rotate(720deg)}}
+  .fb.good{animation:pop .35s ease}
+  @keyframes pop{0%{transform:scale(.97)}60%{transform:scale(1.015)}100%{transform:scale(1)}}
+}
 @media (prefers-reduced-motion:no-preference){.progress i{transition:width .3s ease}}
 </style>
 </head>
@@ -153,6 +191,10 @@ a.big{display:inline-block;font-size:1rem;line-height:1.3;font-family:var(--body
       <div class="seg" role="group" aria-label="Cycle">
         <button type="button" id="c1" aria-pressed="false">Cycle 1</button>
         <button type="button" id="c2" aria-pressed="true">Cycle 2</button>
+      </div>
+      <div class="seg" role="group" aria-label="Mode" id="modeSeg">
+        <button type="button" id="mTrain" aria-pressed="true">Entraînement</button>
+        <button type="button" id="mNote" aria-pressed="false">📝 Mode note</button>
       </div>
       <button type="button" id="install" class="primary" hidden>Installer l'appli</button>
       <button type="button" id="theme" class="ghost">☀ Clair</button>
@@ -169,6 +211,21 @@ a.big{display:inline-block;font-size:1rem;line-height:1.3;font-family:var(--body
     <a href="#chant">Chant</a>
   </nav>
 </header>
+<div id="serBar" hidden>
+  <div class="serin">
+    <div class="sertxt"><b id="serWho"></b> <span id="serPos"></span></div>
+    <div class="progress"><i id="serProg"></i></div>
+    <div class="row serbtns">
+      <button type="button" id="serAgain" class="ghost" hidden>↺ Recommencer</button>
+      <button type="button" id="serNext" class="primary" hidden>Question suivante →</button>
+      <button type="button" id="serQuit" class="ghost">Abandonner</button>
+    </div>
+  </div>
+</div>
+<div id="serDlg" class="dlg" hidden role="dialog" aria-modal="true" aria-labelledby="serDlgT">
+  <div class="dlgbox" id="serDlgBox"></div>
+</div>
+<div id="confetti" aria-hidden="true"></div>
 <main>
 
 <section class="panel" id="p-quiz" aria-labelledby="h-quiz">
@@ -242,9 +299,10 @@ a.big{display:inline-block;font-size:1rem;line-height:1.3;font-family:var(--body
 
 <section class="panel" id="p-rythme" aria-labelledby="h-ry">
   <h2 id="h-ry">Rythme et batterie</h2>
-  <p class="lead">Compte une mesure écrite, reconnais un groove de batterie ou une clave à l'oreille, passe d'une partition de batterie à la grille et inversement. Les grooves changent un peu à chaque fois.</p>
+  <p class="lead">Compte une mesure écrite, écris un rythme entendu (dictée), reconnais un groove de batterie ou une clave à l'oreille, passe d'une partition de batterie à la grille et inversement. Les grooves changent un peu à chaque fois.</p>
   <div class="sub" role="group" aria-label="Exercice">
     <button type="button" id="ryModeCount" aria-pressed="true">Compter une mesure</button>
+    <button type="button" id="ryModeDict" aria-pressed="false">Dictée de rythme</button>
     <button type="button" id="ryModeGroove" aria-pressed="false">Reconnaître un groove</button>
     <button type="button" id="ryModeClave" aria-pressed="false">Reconnaître une clave</button>
     <button type="button" id="ryModePG" aria-pressed="false">Partition → grille</button>
@@ -259,6 +317,25 @@ a.big{display:inline-block;font-size:1rem;line-height:1.3;font-family:var(--body
     <div class="opts" id="ryOpts"></div>
     <div class="fb" id="ryFb" hidden></div>
     <div class="row"><button id="ryNext" class="primary" type="button">Mesure suivante</button></div>
+  </div>
+  <div class="card stack" id="ryDict" hidden>
+    <div class="sub" role="group" aria-label="Niveau" id="rdLv" style="margin:0"></div>
+    <div class="meta" id="rdLvTxt"></div>
+    <div class="row">
+      <div class="seg" role="group" aria-label="Façon de répondre"><button type="button" id="rdWayQ" aria-pressed="true">Choisir la partition</button><button type="button" id="rdWayW" aria-pressed="false">Écrire le rythme</button></div>
+      <label class="meta">Longueur <select id="rdLen"><option value="1">1 mesure</option><option value="2">2 mesures</option></select></label>
+    </div>
+    <div class="qtext" style="margin:0" id="rdQ"></div>
+    <div class="row"><button id="rdPlay" class="primary" type="button">▶ Écouter</button><span class="rdcount" id="rdCount" aria-live="polite"></span><span class="meta" id="rdScore"></span></div>
+    <div class="rdopts" id="rdQcm"></div>
+    <div class="stack" id="rdWrite" hidden>
+      <div class="staffwrap" id="rdUser"></div>
+      <div class="meta">Touche une figure pour remplir le temps entouré. Touche un temps de la portée pour le corriger.</div>
+      <div class="rdpal" id="rdPal"></div>
+      <div class="row"><button id="rdBack" class="ghost" type="button">⌫ Effacer</button><button id="rdClear" class="ghost" type="button">Tout effacer</button><button id="rdCheck" class="primary" type="button">Vérifier</button></div>
+    </div>
+    <div class="fb" id="rdFb" hidden></div>
+    <div class="row"><button id="rdNext" class="primary" type="button">Rythme suivant</button></div>
   </div>
   <div class="card stack" id="ryGroove" hidden>
     <div class="qtext" style="margin:0">Quel est ce groove ?</div>
@@ -514,16 +591,31 @@ function engraveGrand(notes,bass){
 }
 
 // ---- Gravure : une mesure de rythme sur une ligne (4/4, 3/4, 12/8 ; cellules binaires de 4 cases ou ternaires de 3) ----
-function engraveRhythm(cells,meter='4/4'){
-  const nb=cells.length, left=50, beatW=150, W=left+nb*beatW+24, ly=62, Ht=120, stemTop=ly-34, o=[], [num,den]=meter.split('/');
-  o.push(`<line x1="10" y1="${ly}" x2="${W-8}" y2="${ly}" stroke="${INK}"/>`);
-  o.push(`<text x="27" y="${ly-4}" text-anchor="middle" font-family="${SANS}" font-weight="700" font-size="19" fill="${INK}">${num}</text><text x="27" y="${ly+18}" text-anchor="middle" font-family="${SANS}" font-weight="700" font-size="19" fill="${INK}">${den}</text>`);
-  o.push(`<line x1="${W-14}" y1="${ly-14}" x2="${W-14}" y2="${ly+14}" stroke="${INK}"/><line x1="${W-10}" y1="${ly-14}" x2="${W-10}" y2="${ly+14}" stroke="${INK}" stroke-width="3.5"/>`);
+// opt : bar = temps par mesure (barres de mesure entre les mesures), noLab = sans syllabes, mini = un temps seul (palette),
+// mark = tableau par temps ('ok', 'ko', 'cur'), click = zones cliquables data-b ; une case null = temps à remplir (« ? »)
+function engraveRhythm(cells,meter='4/4',opt={}){
+  const nb=cells.length, mini=!!opt.mini, left=mini?6:50, beatW=mini?110:150, W=left+nb*beatW+(mini?6:24), ly=62, Ht=opt.noLab?(mini?92:100):120, stemTop=ly-34, o=[], [num,den]=meter.split('/');
+  o.push(`<line x1="${mini?2:10}" y1="${ly}" x2="${W-(mini?2:8)}" y2="${ly}" stroke="${INK}"/>`);
+  if(!mini){
+    o.push(`<text x="27" y="${ly-4}" text-anchor="middle" font-family="${SANS}" font-weight="700" font-size="19" fill="${INK}">${num}</text><text x="27" y="${ly+18}" text-anchor="middle" font-family="${SANS}" font-weight="700" font-size="19" fill="${INK}">${den}</text>`);
+    o.push(`<line x1="${W-14}" y1="${ly-14}" x2="${W-14}" y2="${ly+14}" stroke="${INK}"/><line x1="${W-10}" y1="${ly-14}" x2="${W-10}" y2="${ly+14}" stroke="${INK}" stroke-width="3.5"/>`);
+    if(opt.bar) for(let b=opt.bar;b<nb;b+=opt.bar){ const x=left+b*beatW-4; o.push(`<line x1="${x}" y1="${ly-14}" x2="${x}" y2="${ly+14}" stroke="${INK}"/>`); }
+  }
   const dot=(x,y)=>`<circle cx="${x}" cy="${y}" r="1.8" fill="${INK}"/>`;
+  const COL={ok:'var(--green)',ko:'var(--red)',cur:'var(--accent)'};
   cells.forEach((cell,b)=>{
-    const n=cell.length, x0=left+b*beatW, dx=(beatW-20)/n, X=i=>x0+14+dx*i+dx*0.3, ter=n===3;
-    const lab=n===4?BINLAB(b+1):TERLAB(b+1);
-    for(let i=0;i<n;i++) o.push(`<text x="${X(i)}" y="${ly+40}" text-anchor="middle" font-family="${SANS}" font-size="12" ${i===0?'font-weight="700" fill="currentColor"':MUTED}>${lab[i]}</text>`);
+    const mk=opt.mark&&opt.mark[b], x0=left+b*beatW;
+    o.push(`<g${mk?` style="color:${COL[mk]}"`:''}>`);
+    if(mk==='cur'||mk==='ko'||mk==='ok') o.push(`<rect x="${x0+2}" y="${ly-44}" width="${beatW-12}" height="${opt.noLab?78:96}" rx="8" fill="none" stroke="currentColor" stroke-width="${mk==='cur'?2.5:1.5}" ${mk==='cur'?'stroke-dasharray="6 4"':''}/>`);
+    if(cell===null||cell===undefined) o.push(`<text x="${x0+beatW/2-4}" y="${ly+8}" text-anchor="middle" font-family="${SANS}" font-size="26" font-weight="700" ${mk==='cur'?'fill="currentColor"':MUTED}>?</text>`);
+    else rBeat(cell,b,x0);
+    if(opt.click) o.push(`<rect data-b="${b}" x="${x0}" y="0" width="${beatW-4}" height="${Ht}" fill="transparent" style="cursor:pointer"/>`);
+    o.push('</g>');
+  });
+  function rBeat(cell,b,x0){
+    const n=cell.length, dx=(beatW-20)/n, X=i=>x0+14+dx*i+dx*0.3, ter=n===3;
+    const bb=(opt.bar?b%opt.bar:b)+1, lab=n===4?BINLAB(bb):TERLAB(bb);
+    if(!opt.noLab) for(let i=0;i<n;i++) o.push(`<text x="${X(i)}" y="${ly+40}" text-anchor="middle" font-family="${SANS}" font-size="12" ${i===0?'font-weight="700" fill="currentColor"':MUTED}>${lab[i]}</text>`);
     const {idx,lead,durs}=cellDurs(cell);
     // silences : binaire en doubles croches (1 = double, 2 = croche, 3 = croche pointée, 4 = noire) ; ternaire en croches (1 = croche, 2 = noire, 3 = noire pointée)
     const rest=(x,d)=>{
@@ -556,8 +648,8 @@ function engraveRhythm(cells,meter='4/4'){
       o.push(`<rect x="${sx(idx[0])-0.6}" y="${stemTop}" width="${sx(idx[idx.length-1])-sx(idx[0])+1.2}" height="4.5" fill="${INK}"/>`);
       beams16(o,idx,durs,sx,stemTop+7,1);
     }
-  });
-  return `<svg xmlns="http://www.w3.org/2000/svg" style="width:100%;height:auto;max-width:${Math.round(W*1.5)}px" viewBox="0 0 ${W} ${Ht}" role="img" aria-label="Mesure à compter">${o.join('')}</svg>`;
+  }
+  return `<svg xmlns="http://www.w3.org/2000/svg" style="width:100%;height:auto;max-width:${Math.round(W*(mini?0.9:1.5))}px" viewBox="0 0 ${W} ${Ht}" role="img" aria-label="${opt.aria||'Mesure à compter'}">${o.join('')}</svg>`;
 }
 // 2e barre (doubles croches) d'un groupe ligaturé ; dir = 1 (hampes en haut) ou -1 (en bas)
 function beams16(o,idx,durs,sx,y2,dir){
@@ -708,14 +800,27 @@ function bump(k,ok){const v=sc(k); v[1]++; if(ok) v[0]++; try{localStorage.setIt
 function showScores(){
   const tot=Object.values(SC[CYCLE]).reduce((a,b)=>[a[0]+b[0],a[1]+b[1]],[0,0]);
   $('globalScore').innerHTML=`Cycle ${CYCLE} · réponses justes : <b>${tot[0]}</b> sur <b>${tot[1]}</b>`;
-  [['ivScore',['ivread','ivear','mel','meldom']],['dgScore',['dg','dict','ana','tr']],['ryScore',['ry']],['grScore',['gr']],['clScore',['cl']],['pgScore',['pg']],['gpScore',['gp']],['stScore',['st']],['vxScore',['vx']]].forEach(([id,ks])=>{const v=ks.reduce((a,k)=>{const x=sc(k);return [a[0]+x[0],a[1]+x[1]];},[0,0]); $(id).textContent=`Score : ${v[0]} / ${v[1]}`;});
+  [['ivScore',['ivread','ivear','mel','meldom']],['dgScore',['dg','dict','ana','tr']],['ryScore',['ry']],['rdScore',['rd']],['grScore',['gr']],['clScore',['cl']],['pgScore',['pg']],['gpScore',['gp']],['stScore',['st']],['vxScore',['vx']]].forEach(([id,ks])=>{const v=ks.reduce((a,k)=>{const x=sc(k);return [a[0]+x[0],a[1]+x[1]];},[0,0]); $(id).textContent=`Score : ${v[0]} / ${v[1]}`;});
 }
 function answer(box,btn,isRight,key){ // marque les boutons, renvoie ok
   const ok=isRight(btn); bump(key,ok);
   box.querySelectorAll('button').forEach(x=>{x.disabled=true; if(isRight(x)) x.classList.add('ok'); else if(x===btn) x.classList.add('ko');});
   return ok;
 }
-function fb(id,ok,title,html){const f=$(id); f.hidden=false; f.className='fb '+(ok===null?'info':ok?'good':'bad'); f.innerHTML=`<h4>${title}</h4>${html}`;}
+function fb(id,ok,title,html){const f=$(id); f.hidden=false; f.className='fb '+(ok===null?'info':ok?'good':'bad'); if(ok===true||ok===false) title=cheer(ok,title); f.innerHTML=`<h4>${title}</h4>${html}`;}
+// ---- Félicitations et encouragements ----
+const PRAISE=['Bien joué !','Exact, bravo !','Impeccable !','Super oreille ! 🎧','Parfait !','Excellent !','Yes, c\'est ça !','Tu gères ! 💪','Trop fort !','Nickel !','Magnifique !','Belle réponse !','Carton plein ! 🎯','Bravo, c\'est juste !','Chapeau ! 🎩','Quelle précision !','Tu as l\'oreille ! 👂','Joli travail !'];
+const PRAISE_VX=['Bravo, tout est juste ! 🎤','Quelle justesse ! 🎤','Superbe, c\'est chanté juste !','Belle voix, et juste en plus ! 🎶'];
+const ENC=['Presque ! Lis bien la correction 👇','Pas grave, c\'est en se trompant qu\'on apprend.','Raté cette fois, tu auras la prochaine !','Pas loin ! Regarde la correction, puis réessaie.','Courage, tu progresses à chaque question 💪','Ce n\'est pas encore ça, mais tu vas y arriver !','Oups ! Prends le temps de comprendre la correction.'];
+let STREAK=0, MISSES=0, LASTMSG='';
+const pickMsg=a=>{ let m; do{ m=rnd(a); }while(a.length>1&&m===LASTMSG); LASTMSG=m; return m; };
+function cheer(ok,title){
+  if(!ok) return /passé|Il manque/.test(title)?title:pickMsg(ENC);
+  if(STREAK>=3&&(STREAK===3||STREAK%5===0)) return STREAK===3?'Trois d\'affilée, ça chauffe ! 🔥':STREAK===5?'Cinq de suite, tu es en feu ! 🔥🔥':STREAK===10?'Dix d\'affilée : niveau légende ! 🏆':`${STREAK} d'affilée, impressionnant ! 🚀`;
+  if(MISSES_BEFORE>=2) return 'Et voilà, tu as trouvé ! Belle persévérance 👏';
+  return pickMsg(/Bravo !/.test(title)?PRAISE_VX:PRAISE);
+}
+let MISSES_BEFORE=0;
 function seg(ids,cur){ids.forEach(([id,v])=>$(id).setAttribute('aria-pressed',String(v===cur)));}
 
 // ===== Module 1 : Quiz (20 questions tirées au hasard) =====
@@ -850,7 +955,7 @@ const ORD=i=>i===0?'1re':`${i+1}e`;
 const wpick=obj=>{ const e=Object.entries(obj); let r=Math.random()*e.reduce((a,x)=>a+x[1],0); for(const [k,w] of e){ r-=w; if(r<0) return k; } return e[0][0]; };
 // Niveaux choisis par l'élève, par exercice et par cycle
 let LVL={}; try{ LVL=JSON.parse(localStorage.getItem('atelier-fm-niveaux')||'{}')||{}; }catch(e){}
-const LVMAX={mel:{1:2,2:3},dict:{1:2,2:3},ry:{1:2,2:3},ch:{1:3,2:3}};
+const LVMAX={mel:{1:2,2:3},dict:{1:2,2:3},ry:{1:2,2:3},rd:{1:2,2:3},ch:{1:3,2:3}};
 const getLv=ex=>Math.min(LVL[ex+CYCLE]||1,LVMAX[ex][CYCLE]);
 const LVNAMES={ch:{1:['Niveau 1 : majeur, mineur, power chord','Niveau 2 : + accord 7','Niveau 3 : accords sur basse'],2:['Niveau 1 : accords à 3 sons','Niveau 2 : accords à 4 sons','Niveau 3 : renversements (3 et 4 sons) et basses étrangères']}};
 function lvlSeg(id,ex,onChange){ const el=$(id), m=LVMAX[ex][CYCLE], cur=getLv(ex);
@@ -1090,11 +1195,11 @@ function vxNew(){
   // octave jouée : celle qui fait tenir l'exercice dans la tessiture de l'élève
   const w=seq.map(pitch), [lo,hi]=VX_TESS[VXS.tess].r; let best=0,bp=1e9;
   for(let k=-3;k<=1;k++){ const a=Math.min(...w)+12*k, b=Math.max(...w)+12*k, p=Math.max(0,lo-a)+Math.max(0,b-hi)+Math.abs((a+b)/2-(lo+hi)/2)*0.01; if(p<bp){bp=p;best=k;} }
-  VX={seq,off:w.map(x=>x-w[0]),start:w[0]+12*best,i:0,ref:null,hold:0,done:false,fails:0};
+  VX={seq,off:w.map(x=>x-w[0]),start:w[0]+12*best,i:0,ref:null,hold:0,done:false,fails:0,miss:[],nt:0};
   $('vxQ').innerHTML=title; $('vxFb').hidden=true; $('vxNow').textContent='—'; $('vxTarget').textContent=fr(seq[0]); vxDraw(); vxMeter(null);
   $('vxStart').hidden=false; $('vxStop').hidden=true;
 }
-function vxDraw(){ if(!VX) return; $('vxStaff').innerHTML=engraveCols(VX.seq.map((n,i)=>({notes:[n],label:i<VX.i?'✓':i===VX.i&&!VX.done?'▲':'',ok:i<VX.i,cur:i===VX.i&&!VX.done})),{colW:VX.seq.length>5?62:90,aria:'Notes à chanter'}); }
+function vxDraw(){ if(!VX) return; $('vxStaff').innerHTML=engraveCols(VX.seq.map((n,i)=>({notes:[n],label:VX.miss.includes(i)?'✗':i<VX.i?'✓':i===VX.i&&!VX.done?'▲':'',ok:i<VX.i&&!VX.miss.includes(i),cur:i===VX.i&&!VX.done})),{colW:VX.seq.length>5?62:90,aria:'Notes à chanter'}); }
 // ---- Détection de hauteur : autocorrélation sur la plage de la voix (70 à 1100 Hz) ----
 let VXA=null; // {stream, src, an, buf, raf, last, hist, muteUntil}
 function vxPitch(buf,sr){
@@ -1125,23 +1230,24 @@ async function vxStart(){
 }
 function vxStopListen(){ if(VXA){ cancelAnimationFrame(VXA.raf); try{VXA.stream.getTracks().forEach(t=>t.stop());}catch(e){} try{VXA.src.disconnect();}catch(e){} VXA=null; } if($('vxStart')){ $('vxStart').hidden=false; $('vxStop').hidden=true; } }
 // note attendue (MIDI) : la première dans l'octave jouée ; ensuite, relative à la note réellement chantée au départ
-const vxTargetMidi=()=>VX.i===0?VX.start:VX.ref+VX.off[VX.i];
+const vxTargetMidi=()=>VX.ref===null?VX.start+VX.off[VX.i]:VX.ref+VX.off[VX.i];
 function vxPlayRef(i){ if(!VX) return; const m=i===0||VX.ref===null?VX.start+VX.off[i]:Math.round(VX.ref)+VX.off[i]; if(VXA) VXA.muteUntil=performance.now()+1500; playNotes([{m,t:0,d:1.2}]); }
 function vxTick(dt){
   if(!VX||VX.done) return;
   if(performance.now()<VXA.muteUntil){ vxMeter(null); return; } // on n'écoute pas pendant que le piano joue
+  if(SER&&!SER.review){ VX.nt+=dt; if(VX.nt>10){ VX.miss.push(VX.i); VX.i++; VX.nt=0; VX.hold=0; VXA.hist=[]; if(VX.i>=VX.seq.length) return vxFinish(); $('vxTarget').textContent=fr(VX.seq[VX.i]); vxDraw(); return; } } // mode note : 10 s par note
   VXA.an.getFloatTimeDomainData(VXA.buf);
   const f=vxPitch(VXA.buf,VXA.an.context.sampleRate);
   if(!f){ VXA.hist=[]; VX.hold=Math.max(0,VX.hold-dt); vxMeter(null); return; }
   VXA.hist.push(midiOf(f)); if(VXA.hist.length>5) VXA.hist.shift();
   const m=VXA.hist.slice().sort((a,b)=>a-b)[VXA.hist.length>>1];
   let tg=vxTargetMidi();
-  if(VX.i===0) tg+=12*Math.round((m-tg)/12); // la note de départ peut être chantée à n'importe quelle octave
+  if(VX.ref===null) tg+=12*Math.round((m-tg)/12); // la note de départ peut être chantée à n'importe quelle octave
   const cents=(m-tg)*100, tol=VX_TOL[VXS.tol].c;
   $('vxNow').textContent=`${fr(nameOfMidi(Math.round(m)))}`;
   vxMeter(Math.abs(cents)>200?(cents>0?200:-200):cents,tol);
-  if(Math.abs(cents)<=tol){ VX.hold+=dt; if(VX.hold>=0.45){ if(VX.i===0) VX.ref=tg; VX.i++; VX.hold=0; VXA.hist=[];
-      if(VX.i>=VX.seq.length){ VX.done=true; bump('vx',true); vxDraw(); vxMeter(null); fb('vxFb',true,'Bravo !',`Tout est juste : ${VX.seq.map(fr).join(' – ')}.`); vxStopListen(); $('vxStart').hidden=true; return; }
+  if(Math.abs(cents)<=tol){ VX.hold+=dt; if(VX.hold>=0.45){ if(VX.ref===null) VX.ref=tg-VX.off[VX.i]; VX.i++; VX.hold=0; VX.nt=0; VXA.hist=[];
+      if(VX.i>=VX.seq.length) return vxFinish();
       $('vxTarget').textContent=fr(VX.seq[VX.i]); vxDraw(); } }
   else VX.hold=Math.max(0,VX.hold-dt*0.5);
 }
@@ -1155,7 +1261,10 @@ function vxMeter(c,tol){
   $('vxCents').textContent=ok?'juste':c>0?'trop haut':'trop bas';
   el.style.setProperty('--tol',(tol/200*50)+'%');
 }
-function vxSkip(){ if(!VX||VX.done) return; VX.done=true; bump('vx',false); vxStopListen(); vxDraw(); fb('vxFb',false,'Exercice passé',`Les notes étaient : ${VX.seq.map(fr).join(' – ')}. Écoute-les, puis recommence ou passe à l'exercice suivant.`); }
+function vxFinish(){ VX.done=true; const L=VX.seq.length, good=L-VX.miss.length; LASTCREDIT=good/L; bump('vx',!VX.miss.length); vxDraw(); vxMeter(null); vxStopListen(); $('vxStart').hidden=true;
+  if(!VX.miss.length) fb('vxFb',true,'Bravo !',`Tout est juste : ${VX.seq.map(fr).join(' – ')}.`);
+  else fb('vxFb',false,'Pas encore',`${good} note${good>1?'s':''} juste${good>1?'s':''} sur ${L}. Les notes manquées sont marquées ✗ : ${VX.miss.map(i=>fr(VX.seq[i])).join(', ')}. Écoute tout l'exercice, puis recommence.`); }
+function vxSkip(){ if(!VX||VX.done) return; VX.done=true; LASTCREDIT=Math.max(0,VX.i-VX.miss.length)/VX.seq.length; bump('vx',false); vxStopListen(); vxDraw(); fb('vxFb',false,'Exercice passé',`Les notes étaient : ${VX.seq.map(fr).join(' – ')}. Écoute-les, puis recommence ou passe à l'exercice suivant.`); }
 function vxListenAll(){ if(!VX) return; const base=VX.ref!==null?Math.round(VX.ref):VX.start; if(VXA) VXA.muteUntil=performance.now()+VX.seq.length*700+800; playNotes(VX.off.map((o,i)=>({m:base+o,t:i*0.65,d:0.6}))); }
 
 // ===== Module 3 : Degrés et grilles =====
@@ -1518,10 +1627,71 @@ function stList(){
 }
 
 // ===== Navigation, cycle, thème =====
+// ---- Dictée de rythme : décompte d'une mesure, puis le rythme aux claves sur la pulsation ----
+let RD=null, RDA='qcm', RDN=1;
+try{ const v=JSON.parse(localStorage.getItem('atelier-fm-dictee-rythme')||'{}'); if(v.a==='qcm'||v.a==='write') RDA=v.a; if(v.n===1||v.n===2) RDN=v.n; }catch(e){}
+const RDWAY=[['rdWayQ','qcm'],['rdWayW','write']];
+function rdGen(lv){
+  let meter='4/4'; const bin=CYCLE===1?(lv===1?['1000','1010']:CELLS_C1):CELLS_BIN;
+  if(CYCLE===2&&lv===3) meter=rnd(['4/4','3/4','12/8']);
+  const ter=meter==='12/8', tri=CYCLE===2&&lv>=2&&!ter;
+  const pal=ter?CELLS_TER.slice():bin.concat(tri?['111']:[]);
+  return {meter,pal,beats:meter==='3/4'?3:4,one:()=>ter?rnd(CELLS_TER):tri&&Math.random()<0.2?'111':rnd(bin)};
+}
+const rdSvg=(cells,o={})=>engraveRhythm(cells,RD.meter,Object.assign({bar:RD.beats,noLab:true,aria:'Rythme'},o));
+function rdNew(){
+  stopLoop(); $('rdFb').hidden=true; lvlSeg('rdLv','rd',rdNew); const lv=getLv('rd'); $('rdLvTxt').textContent=RY_TXT[CYCLE][lv-1];
+  seg(RDWAY,RDA); $('rdLen').value=String(RDN);
+  const G=rdGen(lv), n=G.beats*RDN; let cells, g=0;
+  do{ cells=[...Array(n)].map(G.one); } while(g++<50&&(new Set(cells)).size<Math.min(2,G.pal.length));
+  RD=Object.assign(G,{cells,n,user:Array(n).fill(null),cur:0,done:false,plays:0});
+  const qcm=RDA==='qcm'; $('rdQcm').hidden=!qcm; $('rdQcm').classList.toggle('wide',n>4); $('rdWrite').hidden=qcm;
+  $('rdQ').textContent=`Écoute le décompte (${G.beats} temps${G.meter==='12/8'?' en noires pointées':''}), puis le rythme joué aux claves. `+(qcm?'Quelle partition correspond ?':'Écris-le, temps par temps.');
+  if(qcm){
+    const key=c=>c.join('.'), opts=[cells]; let t=0;
+    while(opts.length<4&&t++<300){ const c=cells.slice(), b=Math.floor(Math.random()*n); c[b]=rnd(G.pal); if(Math.random()<0.25){ const b2=Math.floor(Math.random()*n); c[b2]=rnd(G.pal); } if(!opts.some(o=>key(o)===key(c))) opts.push(c); }
+    const order=shuffle(opts.map((_,j)=>j));
+    $('rdQcm').innerHTML=order.map(j=>`<button type="button" data-j="${j}" aria-label="Partition ${order.indexOf(j)+1}">${rdSvg(opts[j])}</button>`).join('');
+    $('rdQcm').querySelectorAll('button').forEach(b=>b.onclick=()=>{ if(RD.done) return; RD.done=true;
+      const ok=answer($('rdQcm'),b,x=>x.dataset.j==='0','rd'); rdReveal(ok,null); });
+  } else {
+    $('rdPal').innerHTML=G.pal.map(c=>`<button type="button" data-c="${c}" aria-label="Figure ${countString([c])}">${engraveRhythm([c],G.meter,{mini:true,noLab:true,aria:'Figure'})}</button>`).join('');
+    $('rdPal').querySelectorAll('button').forEach(b=>b.onclick=()=>{ if(RD.done) return; RD.user[RD.cur]=b.dataset.c;
+      const nx=RD.user.findIndex((x,i)=>i>RD.cur&&x===null); RD.cur=nx>=0?nx:Math.min(RD.cur+1,RD.n-1); rdDrawUser(); });
+    $('rdCheck').disabled=false; rdDrawUser();
+  }
+  if(!MUTE&&location.hash==='#rythme'&&RYM==='dict') rdPlay();
+}
+function rdDrawUser(){ if(!RD) return;
+  const mark=RD.done?RD.user.map((c,i)=>c===RD.cells[i]?'ok':'ko'):RD.user.map((_,i)=>i===RD.cur?'cur':null);
+  $('rdUser').innerHTML=rdSvg(RD.user,{mark,click:!RD.done,aria:'Ton rythme'}); $('rdUser').style.setProperty('--nb',RD.n);
+  $('rdUser').querySelectorAll('[data-b]').forEach(r=>r.addEventListener('click',()=>{ if(RD.done) return; RD.cur=+r.dataset.b; rdDrawUser(); }));
+}
+function rdBack(){ if(!RD||RD.done) return; if(RD.user[RD.cur]===null&&RD.cur>0) RD.cur--; RD.user[RD.cur]=null; rdDrawUser(); }
+function rdCheck(){ if(!RD||RD.done) return;
+  if(RD.user.some(x=>x===null)){ fb('rdFb',null,'Il manque des temps','Remplis tous les temps (les « ? ») avant de vérifier. Tu peux réécouter autant que tu veux.'); return; }
+  RD.done=true; const wrong=RD.user.map((c,i)=>c!==RD.cells[i]?i:-1).filter(i=>i>=0), ok=!wrong.length;
+  bump('rd',ok); $('rdCheck').disabled=true; rdDrawUser(); rdReveal(ok,wrong);
+}
+function rdReveal(ok,wrong){
+  const tps=w=>w.map(i=>RD.n>RD.beats?`mesure ${Math.floor(i/RD.beats)+1}, temps ${i%RD.beats+1}`:`temps ${i+1}`).join(' ; ');
+  fb('rdFb',ok,ok?'Exact !':'Non.',`${wrong&&wrong.length?`À revoir : ${tps(wrong)} (en rouge sur ta portée).<br>`:''}Le rythme joué, avec ses syllabes :<div class="staffwrap">${engraveRhythm(RD.cells,RD.meter,{bar:RD.beats,aria:'Rythme juste'})}</div>Compte : ${countString(RD.cells)}. Réécoute en suivant la partition.`);
+}
+async function rdPlay(){ if(!RD) return; stopLoop(); const id=LOOPID, ac=await ready(); if(!ac||id!==LOOPID) return; stopSound();
+  const beat=RD.meter==='12/8'?0.9:0.75, t0=ac.currentTime+0.15, B=RD.beats; RD.plays++;
+  for(let k=0;k<B;k++) hit(ac,'xs',t0+k*beat,k===0?1:0.75);
+  const s0=t0+B*beat;
+  RD.cells.forEach((c,b)=>{ hit(ac,'hp',s0+b*beat,0.45); [...c].forEach((x,i)=>{ if(x==='1') hit(ac,'cl',s0+b*beat+i*beat/c.length); }); });
+  const el=$('rdCount'), base=performance.now()+150;
+  for(let k=0;k<B;k++) setTimeout(()=>{ if(id===LOOPID) el.textContent=String(k+1); },150+k*beat*1000);
+  setTimeout(()=>{ if(id===LOOPID) el.textContent='♪'; },150+B*beat*1000);
+  setTimeout(()=>{ if(id===LOOPID) el.textContent=''; },150+(B+RD.n)*beat*1000+300);
+}
+
 const VIEWS=['quiz','intervalles','degres','rythme','ecoute','chant'];
 function route(){
   let v=location.hash.slice(1); if(v==='styles') v='ecoute'; if(!VIEWS.includes(v)) v='quiz';
-  VIEWS.forEach(x=>$('p-'+x).classList.toggle('on',x===v));
+  CURTAB=v; VIEWS.forEach(x=>$('p-'+x).classList.toggle('on',x===v));
   document.querySelectorAll('#tabs a').forEach(a=>a.setAttribute('aria-current',a.getAttribute('href')==='#'+v?'page':'false'));
   if(v!=='chant') vxStopListen();
   if(v!=='ecoute') stPause();
@@ -1529,18 +1699,149 @@ function route(){
 }
 function ryShow(){
   const c1=CYCLE===1&&RYM==='clave';
-  [['ryCount','count'],['ryGroove','groove'],['ryClave','clave'],['ryPG','pg'],['ryGP','gp']].forEach(([id,m])=>$(id).hidden=RYM!==m||(m==='clave'&&c1));
-  $('ryClaveC1').hidden=!c1; stopLoop();
+  [['ryCount','count'],['ryDict','dict'],['ryGroove','groove'],['ryClave','clave'],['ryPG','pg'],['ryGP','gp']].forEach(([id,m])=>$(id).hidden=RYM!==m||(m==='clave'&&c1));
+  $('ryClaveC1').hidden=!c1; stopLoop(); if(RYM==='dict'&&RD&&!RD.done) rdPlay();
 }
 function setCycle(c){
   CYCLE=c; try{localStorage.setItem('atelier-fm-cycle',String(c));}catch(e){}
-  seg([['c1',1],['c2',2]],c); quizStart(); ivNewQuiet(); dgNewQuiet(); ryNew(); grNew(); clNew(); pgNew(); gpNew(); ryShow(); vxNew(); STC='all'; stStart(); showScores();
+  seg([['c1',1],['c2',2]],c); quizStart(); ivNewQuiet(); dgNewQuiet(); ryNew(); MUTE=true; rdNew(); MUTE=false; grNew(); clNew(); pgNew(); gpNew(); ryShow(); vxNew(); STC='all'; stStart(); showScores();
 }
 function setTheme(t){ document.documentElement.setAttribute('data-theme',t); try{localStorage.setItem('atelier-fm-theme',t);}catch(e){}
   const b=$('theme'); b.textContent=t==='dark'?'☀ Clair':'☾ Sombre'; b.setAttribute('aria-label',t==='dark'?'Passer en thème clair':'Passer en thème sombre'); }
 // premier affichage sans son (le navigateur n'autorise le son qu'après un clic)
 function ivNewQuiet(){MUTE=true;ivNew();MUTE=false;}
 function dgNewQuiet(){MUTE=true;dgNew();MUTE=false;}
+// ===== Mode note (séries de 20) et mode entraînement (Recommencer) =====
+// Chaque question est tirée avec une graine : la rejouer avec la même graine redonne exactement la même question.
+const RAND0=Math.random.bind(Math);
+function mulberry(a){ return function(){ a|=0; a=a+0x6D2B79F5|0; let t=Math.imul(a^a>>>15,1|a); t=t+Math.imul(t^t>>>7,61|t)^t; return ((t^t>>>14)>>>0)/4294967296; }; }
+let RNGF=null; Math.random=()=>RNGF?RNGF():RAND0();
+let QID=0, REPLAY=null, CURTAB='quiz', LASTCREDIT=null; const CUR={};
+const TABOF={quizShow:'quiz',ivNew:'intervalles',dgNew:'degres',ryNew:'rythme',rdNew:'rythme',grNew:'rythme',clNew:'rythme',pgNew:'rythme',gpNew:'rythme',stShow:'ecoute',vxNew:'chant'};
+const IVMB=[['ivModeInt','int'],['ivModeChord','chord'],['ivModeMel','mel']], IVWB=[['ivWayRead','read'],['ivWayEar','ear']];
+const DGB=[['dgModeDeg','deg'],['dgModeCad','cad'],['dgModeDict','dict'],['dgModeAna','ana'],['dgModeTr','tr'],['dgModeSong','song']];
+const RYB=[['ryModeCount','count'],['ryModeDict','dict'],['ryModeGroove','groove'],['ryModeClave','clave'],['ryModePG','pg'],['ryModeGP','gp']];
+const VXB=[['vxModeInt','int'],['vxModeGam','gam'],['vxModeArp','arp']];
+const RYFN={count:'ryNew',dict:'rdNew',groove:'grNew',clave:'clNew',pg:'pgNew',gp:'gpNew'};
+function ctxGet(tab){ const L=JSON.stringify(LVL);
+  if(tab==='quiz') return {q:QZ.order?QZ.order[QZ.i]:null};
+  if(tab==='intervalles') return {IVM,IVW,L};
+  if(tab==='degres') return {DGM,L};
+  if(tab==='rythme') return {RYM,L,RDA,RDN};
+  if(tab==='ecoute') return {item:STQ.pool?STQ.pool[STQ.order[STQ.i]]:null};
+  return {VXM,L}; }
+function ctxSet(tab,c){
+  if(c.L) try{ LVL=JSON.parse(c.L); }catch(e){}
+  if(tab==='quiz'&&c.q!=null){ QZ={bank:CYCLE===1?QUIZ1:QUIZ2,order:[c.q],i:0,good:0}; }
+  if(tab==='intervalles'){ IVM=c.IVM; IVW=c.IVW; seg(IVMB,IVM); seg(IVWB,IVW); }
+  if(tab==='degres'){ DGM=c.DGM; seg(DGB,DGM); }
+  if(tab==='rythme'){ RYM=c.RYM; RDA=c.RDA||RDA; RDN=c.RDN||RDN; seg(RYB,RYM); ryShow(); }
+  if(tab==='ecoute'&&c.item){ STQ={pool:[c.item],order:[0],i:0}; $('stQuiz').hidden=false; $('stList').hidden=true; }
+  if(tab==='chant'){ VXM=c.VXM; seg(VXB,VXM); }
+}
+function qfn(tab){ return tab==='quiz'?'quizShow':tab==='intervalles'?'ivNew':tab==='degres'?'dgNew':tab==='rythme'?RYFN[RYM]:tab==='ecoute'?'stShow':'vxNew'; }
+// on enveloppe les fonctions « nouvelle question » de chaque rubrique
+Object.keys(TABOF).forEach(n=>{ const f=window[n]; window[n]=function(...a){
+  const seed=REPLAY!==null?REPLAY:(RAND0()*4294967296)>>>0; REPLAY=null; RNGF=mulberry(seed); QID++;
+  const tab=TABOF[n]; CUR[tab]={fn:n,seed,ctx:ctxGet(tab)}; return f.apply(this,a); }; });
+function replay(tab){ const c=CUR[tab]; if(!c) return; REPLAY=c.seed; window[c.fn](); }
+// chaque réponse passe par bump : série d'affilée, et comptage de la série en cours
+const bump0=bump;
+bump=function(k,ok){ MISSES_BEFORE=ok?MISSES:0; if(ok){ STREAK++; MISSES=0; } else { STREAK=0; MISSES++; } bump0(k,ok);
+  const cr=LASTCREDIT!==null?LASTCREDIT:(ok?1:0); LASTCREDIT=null;
+  if(SER&&!SER.review&&!SER.answered&&QID===SER.qid){ SER.answered=true; const it=SER.items[SER.i]; SER.res.push({label:it.label,tab:it.tab,ctx:it.used,seed:it.seed,credit:cr});
+    $('serNext').hidden=false; $('serNext').textContent=SER.i+1>=SER.items.length?'Voir ma note 🎓':'Question suivante →'; serBarTxt(); }
+};
+let SER=null;
+const SERN=20;
+function modeLabel(tab){
+  const t=b=>b.filter(([id])=>$(id).getAttribute('aria-pressed')==='true').map(([id])=>$(id).textContent.trim())[0]||'';
+  if(tab==='quiz') return 'Questions de cours';
+  if(tab==='intervalles') return IVM==='mel'?'Dictée mélodique':`${t(IVMB)} (${IVW==='ear'?'à l\'oreille':'à la lecture'})`;
+  if(tab==='degres') return t(DGB);
+  if(tab==='rythme') return t(RYB)+(RYM==='dict'?(RDA==='qcm'?' (choisir la partition)':' (écrire le rythme)'):'');
+  if(tab==='ecoute') return 'Écoute';
+  return 'Chant : '+t(VXB).toLowerCase();
+}
+function serDialog(){
+  if(SER) return; let nm=''; try{ nm=sessionStorage.getItem('atelier-fm-prenom')||''; }catch(e){}
+  const lab=modeLabel(CURTAB);
+  $('serDlgBox').innerHTML=`<h3 id="serDlgT">📝 Mode note</h3>
+    <p class="meta" style="margin:0">Une série de ${SERN} questions, une seule réponse par question, et ta note sur 20 à la fin. La note n'est pas enregistrée : montre-la à ton professeur avant de fermer.</p>
+    <label>Ton prénom<input id="serName" type="text" autocomplete="given-name" maxlength="30" value="${nm.replace(/"/g,'&quot;')}"></label>
+    <button type="button" class="choice2 primary" id="serGoTab"><b>Série sur cet exercice</b><small style="color:inherit">${lab} · ${SERN} questions</small></button>
+    <button type="button" class="choice2" id="serGoAll"><b>Évaluation générale</b><small>${SERN} questions mélangées : cours, intervalles, accords, degrés, rythme, écoute (sans le chant)</small></button>
+    <button type="button" class="ghost" id="serCancel">Annuler</button>`;
+  $('serDlg').hidden=false; setTimeout(()=>$('serName').focus(),50);
+  $('serGoTab').onclick=()=>serStart('tab'); $('serGoAll').onclick=()=>serStart('all'); $('serCancel').onclick=()=>{ $('serDlg').hidden=true; };
+}
+function planTab(tab){ const lab=modeLabel(tab), ctx=ctxGet(tab);
+  if(tab==='quiz'){ const bank=CYCLE===1?QUIZ1:QUIZ2; return shuffle(bank.map((_,i)=>i)).slice(0,SERN).map(q=>({tab,label:lab,ctx:{q}})); }
+  if(tab==='ecoute'){ const pool=stPool(); return shuffle(pool).slice(0,SERN).map(item=>({tab,label:'Écoute',ctx:{item}})); }
+  return [...Array(SERN)].map(()=>({tab,label:lab,ctx})); }
+function planAll(){ const L=JSON.stringify(LVL), bank=CYCLE===1?QUIZ1:QUIZ2, qs=shuffle(bank.map((_,i)=>i));
+  const stc=STC; STC='all'; const songs=shuffle(stPool()); STC=stc;
+  const T=(tab,label,ctx,k=1)=>[...Array(k)].map(()=>({tab,label,ctx}));
+  return [].concat(qs.slice(0,4).map(q=>({tab:'quiz',label:'Questions de cours',ctx:{q}})),
+    T('intervalles','Intervalles à la lecture',{IVM:'int',IVW:'read',L},2), T('intervalles','Intervalles à l\'oreille',{IVM:'int',IVW:'ear',L},2),
+    T('intervalles','Accords à la lecture',{IVM:'chord',IVW:'read',L},1), T('intervalles','Accords à l\'oreille',{IVM:'chord',IVW:'ear',L},2),
+    T('degres','Degrés',{DGM:'deg',L},2), T('degres','Cadences',{DGM:'cad',L},1), T('degres','Dictée de degrés',{DGM:'dict',L},1),
+    T('rythme','Compter une mesure',{RYM:'count',L},1), T('rythme','Dictée de rythme',{RYM:'dict',L,RDA:'qcm',RDN:1},2), T('rythme','Grooves',{RYM:'groove',L},1),
+    songs.slice(0,1).map(item=>({tab:'ecoute',label:'Écoute',ctx:{item}}))); }
+function serStart(kind){
+  let nm=($('serName').value||'').trim(); try{ sessionStorage.setItem('atelier-fm-prenom',nm); }catch(e){}
+  const items=kind==='all'?planAll():planTab(CURTAB);
+  SER={kind,name:nm,items,i:0,res:[],review:null,start:new Date(),cycle:CYCLE};
+  $('serDlg').hidden=true; document.body.classList.add('locked'); seg([['mTrain',0],['mNote',1]],1); STREAK=0; MISSES=0; serGo();
+}
+function goTab(tab){ if(location.hash!=='#'+tab){ history.replaceState(null,'','#'+tab); route(); } CURTAB=tab; }
+function serGo(){ const it=SER.items[SER.i]; SER.answered=false; goTab(it.tab); ctxSet(it.tab,it.ctx); window[qfn(it.tab)](); SER.qid=QID; it.seed=CUR[it.tab].seed; it.used=CUR[it.tab].ctx;
+  $('serNext').hidden=true; $('serAgain').hidden=true; $('serBar').hidden=false; serBarTxt(); window.scrollTo({top:0,behavior:'smooth'}); }
+function serBarTxt(){ if(!SER) return;
+  if(SER.review){ const r=SER.review; $('serWho').textContent='Retravailler mes erreurs'; $('serPos').textContent=`· ${r.i+1} sur ${r.list.length} · ${r.list[r.i].label}`; $('serProg').style.width=((r.i+1)/r.list.length*100)+'%'; return; }
+  const done=SER.res.length, pts=SER.res.reduce((a,x)=>a+x.credit,0);
+  $('serWho').textContent=`📝 ${SER.name||'Mode note'}`; $('serPos').textContent=`· question ${SER.i+1} sur ${SER.items.length} · ${fmtPts(pts)} point${pts>1?'s':''}`;
+  $('serProg').style.width=(done/SER.items.length*100)+'%'; }
+const fmtPts=x=>String(Math.round(x*10)/10).replace('.',',');
+function serNext(){ if(!SER) return; if(SER.review){ SER.review.i++; if(SER.review.i>=SER.review.list.length) return serEnd(); return reviewGo(); }
+  if(!SER.answered) return; SER.i++; if(SER.i>=SER.items.length) return serResult(); serGo(); }
+function serResult(){ stopLoop(); vxStopListen(); stPause();
+  const tot=SER.items.length, pts=SER.res.reduce((a,x)=>a+x.credit,0), note=Math.round(pts/tot*20*2)/2, nm=SER.name||'';
+  const by={}; SER.res.forEach(r=>{ const b=by[r.label]=by[r.label]||[0,0]; b[0]+=r.credit; b[1]++; });
+  const errs=SER.res.filter(r=>r.credit<1);
+  const msg=note>=18?`Exceptionnel${nm?', '+nm:''} ! 🏆`:note>=15?`Très beau résultat${nm?', '+nm:''} ! 🌟`:note>=12?`Bon travail${nm?', '+nm:''} ! 👍`:note>=10?`C'est la moyenne${nm?', '+nm:''} : continue comme ça !`:`Ne lâche rien${nm?', '+nm:''} ! Retravaille tes erreurs et retente ta chance 💪`;
+  const d=SER.start, when=d.toLocaleDateString('fr-FR',{weekday:'long',day:'numeric',month:'long'})+' à '+d.toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'});
+  $('serDlgBox').innerHTML=`<h3 id="serDlgT">${msg}</h3>
+    <div class="note20">${fmtPts(note)}<small> / 20</small></div>
+    <div class="meta">${nm?`<b style="color:var(--ink)">${nm.replace(/</g,'&lt;')}</b> · `:''}Cycle ${SER.cycle} · ${SER.kind==='all'?'Évaluation générale':SER.items[0].label} · ${when}</div>
+    <table class="bilan"><tbody>${Object.entries(by).map(([l,[a,b]])=>`<tr><td>${l}</td><td>${fmtPts(a)} / ${b}</td></tr>`).join('')}</tbody></table>
+    ${errs.length?`<button type="button" class="primary" id="serRev">Retravailler mes erreurs (${errs.length})</button>`:'<p style="margin:0">Aucune erreur : sans faute ! 🎉</p>'}
+    <div class="row" style="margin:0"><button type="button" id="serAgainAll">Nouvelle série</button><button type="button" class="ghost" id="serClose">Retour à l'entraînement</button></div>`;
+  $('serDlg').hidden=false; $('serBar').hidden=true;
+  if(errs.length) $('serRev').onclick=()=>{ $('serDlg').hidden=true; SER.review={list:errs,i:0}; reviewGo(); };
+  $('serAgainAll').onclick=()=>{ const k=SER.kind; serEnd(); serDialog(); };
+  $('serClose').onclick=serEnd;
+  if(note>=18) confetti();
+}
+function reviewGo(){ const r=SER.review, it=r.list[r.i]; $('serQuit').textContent='Arrêter'; goTab(it.tab); ctxSet(it.tab,it.ctx); REPLAY=it.seed; window[qfn(it.tab)]();
+  $('serBar').hidden=false; $('serAgain').hidden=false; $('serNext').hidden=false; $('serNext').textContent=r.i+1>=r.list.length?'Terminer ✓':'Erreur suivante →'; serBarTxt(); window.scrollTo({top:0,behavior:'smooth'}); }
+function serEnd(){ SER=null; $('serQuit').textContent='Abandonner'; $('serDlg').hidden=true; $('serBar').hidden=true; document.body.classList.remove('locked'); seg([['mTrain',0],['mNote',1]],0); }
+let quitArm=0;
+function serQuit(){ if(SER&&SER.review) return serEnd(); if(Date.now()-quitArm>3000){ quitArm=Date.now(); $('serQuit').textContent='Sûr ? Clique encore'; setTimeout(()=>{ if($('serQuit')) $('serQuit').textContent='Abandonner'; },3000); return; } $('serQuit').textContent='Abandonner'; stopLoop(); vxStopListen(); serEnd(); }
+function confetti(){ const c=$('confetti'), cols=['#f6c344','#7aa7ff','#5bd18b','#ff7a90','#c58bff','#ffa24c']; c.innerHTML='';
+  for(let i=0;i<120;i++){ const e=document.createElement('i'); e.style.left=(RAND0()*100)+'vw'; e.style.background=cols[i%cols.length]; e.style.animationDuration=(2+RAND0()*2.5)+'s'; e.style.animationDelay=(RAND0()*0.8)+'s'; c.appendChild(e); }
+  setTimeout(()=>{ c.innerHTML=''; },5500); }
+function trainSetup(){
+  // bouton « Recommencer » à côté de chaque bouton « suivant » (entraînement seulement)
+  [['qNext','quiz'],['ivNext','intervalles'],['dgNext','degres'],['ryNext','rythme'],['rdNext','rythme'],['grNext','rythme'],['clNext','rythme'],['pgNext','rythme'],['gpNext','rythme'],['stNext','ecoute'],['vxNext','chant']].forEach(([id,tab])=>{
+    const nx=$(id); nx.classList.add('lockhide'); const b=document.createElement('button'); b.type='button'; b.className='ghost trainonly'; b.textContent='↺ Recommencer';
+    b.title='Refaire la même question'; b.onclick=()=>replay(tab); nx.insertAdjacentElement('afterend',b); });
+  ['qRestart','qCount','vxAll','vxHelp'].forEach(id=>$(id).classList.add('lockhide')); $('qBar').parentNode.classList.add('lockhide'); $('quizLead').classList.add('lockhide');
+  $('mTrain').onclick=()=>{ if(SER) serQuit(); }; $('mNote').onclick=serDialog;
+  $('serNext').onclick=serNext; $('serAgain').onclick=()=>replay(CURTAB); $('serQuit').onclick=serQuit;
+  $('serDlg').addEventListener('keydown',e=>{ if(e.key==='Escape'&&!SER) $('serDlg').hidden=true; if(e.key==='Enter'&&e.target.id==='serName') serStart('tab'); });
+}
+
 function start(){
   setTheme(document.documentElement.getAttribute('data-theme')==='light'?'light':'dark');
   $('theme').onclick=()=>setTheme(document.documentElement.getAttribute('data-theme')==='dark'?'light':'dark');
@@ -1557,9 +1858,12 @@ function start(){
   $('dgPlay').onclick=()=>{ if(DG) playProg(DG.chords); };
   $('dgTonic').onclick=()=>{ if(DG) playTonic(DG.k); };
   $('dgTempo').value=DGT; $('dgTempo').onchange=e=>{ DGT=e.target.value; try{localStorage.setItem('atelier-fm-tempo',DGT);}catch(x){} };
-  const rys=[['ryModeCount','count'],['ryModeGroove','groove'],['ryModeClave','clave'],['ryModePG','pg'],['ryModeGP','gp']];
+  const rys=[['ryModeCount','count'],['ryModeDict','dict'],['ryModeGroove','groove'],['ryModeClave','clave'],['ryModePG','pg'],['ryModeGP','gp']];
   rys.forEach(([id,v])=>$(id).onclick=()=>{RYM=v;seg(rys,v);ryShow();});
-  $('ryNext').onclick=ryNew; $('ryPlay').onclick=ryPlay; $('grNext').onclick=grNew; $('grPlay').onclick=grPlay; $('grStop').onclick=stopLoop;
+  $('ryNext').onclick=ryNew; $('ryPlay').onclick=ryPlay;
+  $('rdNext').onclick=()=>rdNew(); $('rdPlay').onclick=rdPlay; $('rdBack').onclick=rdBack; $('rdClear').onclick=()=>{ if(RD&&!RD.done){ RD.user.fill(null); RD.cur=0; rdDrawUser(); } }; $('rdCheck').onclick=rdCheck;
+  RDWAY.forEach(([id,v])=>$(id).onclick=()=>{ RDA=v; try{localStorage.setItem('atelier-fm-dictee-rythme',JSON.stringify({a:RDA,n:RDN}));}catch(e){} rdNew(); });
+  $('rdLen').onchange=e=>{ RDN=+e.target.value; try{localStorage.setItem('atelier-fm-dictee-rythme',JSON.stringify({a:RDA,n:RDN}));}catch(x){} rdNew(); }; $('grNext').onclick=grNew; $('grPlay').onclick=grPlay; $('grStop').onclick=stopLoop;
   $('clNext').onclick=clNew; $('clPlay').onclick=clPlay; $('clStop').onclick=stopLoop;
   $('pgNext').onclick=pgNew; $('pgCheck').onclick=pgCheck; $('pgMine').onclick=pgMine; $('pgRight').onclick=pgRight; $('pgStop').onclick=stopLoop;
   $('gpNext').onclick=gpNew; $('gpPlay').onclick=gpPlay; $('gpStop').onclick=stopLoop;
@@ -1571,7 +1875,7 @@ function start(){
   $('vxTess').onchange=e=>{VXS.tess=e.target.value;vxSave();vxNew();}; $('vxTol').onchange=e=>{VXS.tol=e.target.value;vxSave();};
   $('vxStart').onclick=vxStart; $('vxStop').onclick=vxStopListen; $('vxNext').onclick=vxNew; $('vxSkip').onclick=vxSkip;
   $('vxHelp').onclick=()=>{ if(VX&&!VX.done) vxPlayRef(VX.i); }; $('vxAll').onclick=vxListenAll;
-  setCycle(CYCLE); route(); window.addEventListener('hashchange',route);
+  trainSetup(); setCycle(CYCLE); route(); window.addEventListener('hashchange',route);
   loadSamples();
   // Appli installable (PWA) : fonctionnement hors ligne et bouton « Installer l'appli » quand le navigateur le propose
   try{ if('serviceWorker' in navigator&&/^https?:$/.test(location.protocol)) navigator.serviceWorker.register('sw.js').catch(()=>{}); }catch(e){}
