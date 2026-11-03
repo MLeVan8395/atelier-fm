@@ -1968,7 +1968,8 @@ const FXN={reverb:['Réverbération','le son se prolonge comme dans une grande s
  flanger:['Flanger','un balayage métallique, comme un avion qui passe'],
  phaser:['Phaser','un balayage plus doux qui « tourne » lentement dans le son'],
  wah:['Wah-wah','un filtre qui bouge sans arrêt : le son semble dire « oua-oua »']};
-const FXSET={1:['reverb','delay','sat','chorus','trem'],2:Object.keys(FXN)};
+// cycle 1 : les effets du mini-synthé (vibrato, saturation, phaser, flanger, trémolo, chorus, delay) et la réverbération ; cycle 2 : + wah-wah
+const FXSET={1:['reverb','delay','sat','chorus','trem','vib','phaser','flanger'],2:Object.keys(FXN)};
 const SYNP={
  attack:{n:'L\'attaque',lo:{a:0.01},hi:{a:0.7},hiTxt:'attaque lente : le son monte progressivement, comme une nappe',loTxt:'attaque rapide : le son démarre d\'un coup',v:'Ampli et enveloppe'},
  release:{n:'Le relâchement (release)',lo:{r:0.04},hi:{r:1.3},hiTxt:'relâchement long : le son continue après la fin de la note',loTxt:'relâchement court : le son s\'arrête net',v:'Ampli et enveloppe'},
