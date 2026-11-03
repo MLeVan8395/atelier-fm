@@ -375,7 +375,7 @@ body.locked .lockhide{display:none!important}
 
 <section class="panel" id="p-chant" aria-labelledby="h-vx">
   <h2 id="h-vx">Chant</h2>
-  <p class="lead">Écoute la note de départ au piano, puis chante : l'atelier écoute ta voix au micro et valide chaque note tenue juste. Chante dans ta tessiture, à l'octave qui te convient. Le son du micro est analysé dans la page : il n'est ni enregistré ni envoyé.</p>
+  <p class="lead">Écoute la note de départ au piano, puis chante (intervalles, gammes avec motifs, arpèges et renversements, en montant ou en descendant) : l'atelier écoute ta voix au micro et valide chaque note tenue juste. Chante dans ta tessiture, à l'octave qui te convient. Le son du micro est analysé dans la page : il n'est ni enregistré ni envoyé.</p>
   <div class="sub" role="group" aria-label="Exercice">
     <button type="button" id="vxModeInt" aria-pressed="true">Intervalles</button>
     <button type="button" id="vxModeGam" aria-pressed="false">Gammes</button>
@@ -385,6 +385,12 @@ body.locked .lockhide{display:none!important}
     <div class="row">
       <label class="meta">Ma voix <select id="vxTess"></select></label>
       <label class="meta">Justesse <select id="vxTol"></select></label>
+    </div>
+    <div class="row lockhide" id="vxOpts">
+      <label class="meta"><input type="checkbox" id="vxSkipFirst"> <span id="vxSkipTxt">Ne pas chanter la 1re note (jouée au piano)</span></label>
+      <label class="meta" id="vxDirL">Sens <select id="vxDir"><option value="up">en montant</option><option value="down">en descendant</option><option value="rand">au hasard</option></select></label>
+      <label class="meta" id="vxPatL">Motif <select id="vxPat"></select></label>
+      <label class="meta" id="vxInvL">Renversement <select id="vxInv"></select></label>
     </div>
     <div class="sub" role="group" aria-label="Niveau" id="vxLv" style="margin:0"></div>
     <div class="meta" id="vxLvTxt"></div>
@@ -1168,8 +1174,11 @@ const VX_LV={
  arp:{1:[{t:'Niveau 1 : majeur, mineur',set:['','m']},{t:'Niveau 2 : + accord 7',set:['','m','7']}],
       2:[{t:'Niveau 1 : triades (majeure, mineure, diminuée, augmentée, sus4)',set:['','m','dim','aug','sus4']},{t:'Niveau 2 : accords à 4 sons',set:['Maj7','7','m7','m7♭5','dim7','6','m6','mMaj7']}]}};
 MATS.melo={lab:t=>`${t} mineur mélodique`,sc:[[0,0],[1,2],[2,3],[3,5],[4,7],[5,9],[6,11]],ton:[['A','C']],ch:'m'};
-let VXM='int', VX=null, VXS={tess:'alto',tol:'normal'};
-try{ const v=JSON.parse(localStorage.getItem('atelier-fm-chant')||'{}'); if(VX_TESS[v.tess]) VXS.tess=v.tess; if(VX_TOL[v.tol]) VXS.tol=v.tol; }catch(e){}
+// motifs de gamme : intervalle (en degrés) et alternance
+const VX_PAT={none:'gamme simple','3':'en tierces','3a':'en tierces alternées (une monte, une descend)','4':'en quartes','4a':'en quartes alternées','5':'en quintes','5a':'en quintes alternées','6':'en sixtes','6a':'en sixtes alternées','7':'en septièmes','7a':'en septièmes alternées'};
+const VX_INV={'0':'état fondamental','1':'1er renversement','2':'2e renversement','3':'3e renversement (accords à 4 sons)','rand':'au hasard'};
+let VXM='int', VX=null, VXS={tess:'alto',tol:'normal',skip:false,dir:'up',pat:'none',inv:'0'};
+try{ const v=JSON.parse(localStorage.getItem('atelier-fm-chant')||'{}'); if(VX_TESS[v.tess]) VXS.tess=v.tess; if(VX_TOL[v.tol]) VXS.tol=v.tol; if(typeof v.skip==='boolean') VXS.skip=v.skip; if(['up','down','rand'].includes(v.dir)) VXS.dir=v.dir; if(VX_PAT[v.pat]!==undefined) VXS.pat=v.pat; if(['0','1','2','3','rand'].includes(v.inv)) VXS.inv=v.inv; }catch(e){}
 const vxSave=()=>{ try{localStorage.setItem('atelier-fm-chant',JSON.stringify(VXS));}catch(e){} };
 const vxLvKey=()=>'vx'+VXM;
 ['vxint','vxgam','vxarp'].forEach(k=>LVMAX[k]={1:2,2:2});
@@ -1177,30 +1186,48 @@ function vxNew(){
   vxStopListen(); stopLoop();
   lvlSeg('vxLv',vxLvKey(),vxNew);
   const lv=VX_LV[VXM][CYCLE][getLv(vxLvKey())-1]; $('vxLvTxt').textContent=lv.t;
-  let seq=null, title='', names=null;
+  let seq=null, title='', names=null, last=null, lastT='';
+  $('vxDirL').hidden=VXM==='int'; $('vxPatL').hidden=VXM!=='gam'; $('vxInvL').hidden=VXM!=='arp';
+  $('vxSkipTxt').textContent=VXM==='int'?'Ne chanter que la 2e note (la 1re est jouée au piano)':'Ne pas chanter la 1re note (jouée au piano)';
+  const DIRW=d=>d==='up'?'en montant':'en descendant';
   for(let tries=0;tries<200&&!seq;tries++){
+    const dir=VXS.dir==='rand'?rnd(['up','down']):VXS.dir;
     if(VXM==='int'){
       const lab=rnd(lv.set), iv=IV.find(v=>v[2]===lab), lo=Object.assign({},rnd(CYCLE===1?ROOTS.slice(0,7):ROOTS)), hi=up(lo,iv[0],iv[1]);
       if(Math.abs(hi.a)>1) continue; const desc=lv.desc&&Math.random()<0.5;
-      seq=desc?[hi,lo]:[lo,hi]; title=`Chante une <b>${IVNAME[lab]}</b> (${lab}) en ${desc?'descendant':'montant'}, à partir de ${fr(seq[0])}.`;
+      seq=desc?[hi,lo]:[lo,hi];
+      title=VXS.skip?`Écoute ${fr(seq[0])} au piano, puis chante la note une <b>${IVNAME[lab]}</b> (${lab}) ${desc?'en dessous':'au-dessus'}.`:`Chante une <b>${IVNAME[lab]}</b> (${lab}) en ${desc?'descendant':'montant'}, à partir de ${fr(seq[0])}.`;
     } else if(VXM==='gam'){
-      const mat=rnd(lv.mats), M=MATS[mat], ton=rnd(['C','D','E','F','G','A','B♭']), sig={C:'C'}, cfg={mat,ton,sig:'C'};
-      seq=[...Array(M.sc.length+1).keys()].map(i=>melNote(cfg,i));
-      title=`Chante la gamme : <b>${M.lab(ton)}</b>, en montant.`;
+      let mats=lv.mats; if(VXS.pat!=='none'){ const h=mats.filter(m=>MATS[m].sc.length===7); if(h.length) mats=h; }
+      const mat=rnd(mats), M=MATS[mat], ton=rnd(['C','D','E','F','G','A','B♭']), cfg={mat,ton,sig:'C'}, L=M.sc.length;
+      let idx=[];
+      if(VXS.pat==='none'||L!==7){ idx=[...Array(L+1).keys()]; if(dir==='down') idx.reverse(); }
+      else { const k=parseInt(VXS.pat,10)-1, alt=VXS.pat.endsWith('a');
+        if(dir==='up') for(let i=0;i+k<=L+2;i++){ const pr=[i,i+k]; idx.push(...(alt&&i%2?pr.reverse():pr)); }
+        else for(let i=L,j=0;i-k>=-2;i--,j++){ const pr=[i,i-k]; idx.push(...(alt&&j%2?pr.reverse():pr)); } }
+      seq=idx.map(i=>melNote(cfg,i));
+      title=`Chante la gamme : <b>${M.lab(ton)}</b>${VXS.pat!=='none'&&L===7?`, <b>${VX_PAT[VXS.pat]}</b>`:''}, ${DIRW(dir)}.`;
     } else {
-      const q=rnd(lv.set), root=Object.assign({},rnd(CYCLE===1?ROOTS.slice(0,9):ROOTS)), notes=chordNotes(root,q).concat([up(root,7,12)]);
-      seq=notes; title=`Chante l'arpège de <b>${en(root)}${q}</b> (${QNAME[q]}, ${CH[q][1]} puis l'octave), en montant.`;
+      const q=rnd(lv.set), root=Object.assign({},rnd(CYCLE===1?ROOTS.slice(0,9):ROOTS)), T=chordNotes(root,q), n=T.length, upO=x=>up(x,7,12);
+      const inv=VXS.inv==='rand'?Math.floor(Math.random()*n):Math.min(+VXS.inv,n-1);
+      let notes=T.slice(inv).concat(T.slice(0,inv).map(upO)); notes.push(upO(T[inv])); if(dir==='down') notes.reverse();
+      seq=notes; title=`Chante l'arpège de <b>${en(root)}${q}</b> (${QNAME[q]}, ${CH[q][1]}${inv?`, <b>${['','1er','2e','3e'][inv]} renversement</b>`:''}), ${DIRW(dir)}${dir==='up'?', jusqu\'à l\'octave':', depuis l\'octave'}.`;
     }
-    if(seq&&(seq.some(n=>Math.abs(n.a)>1)||seq.some(n=>dpos(n)<26||dpos(n)>42))) seq=null;
+    if(VXS.skip&&VXM!=='int') title+=' La 1re note est jouée au piano : chante la suite.';
+    if(seq&&seq.some(n=>Math.abs(n.a)>1)){ seq=null; continue; }
+    if(seq){ last=seq; lastT=title; } // dernier essai valable, au cas où aucun ne tient sur la portée
+    if(seq&&seq.some(n=>dpos(n)<24||dpos(n)>45)) seq=null;
   }
+  if(!seq){ seq=last; title=lastT; }
   // octave jouée : celle qui fait tenir l'exercice dans la tessiture de l'élève
   const w=seq.map(pitch), [lo,hi]=VX_TESS[VXS.tess].r; let best=0,bp=1e9;
   for(let k=-3;k<=1;k++){ const a=Math.min(...w)+12*k, b=Math.max(...w)+12*k, p=Math.max(0,lo-a)+Math.max(0,b-hi)+Math.abs((a+b)/2-(lo+hi)/2)*0.01; if(p<bp){bp=p;best=k;} }
-  VX={seq,off:w.map(x=>x-w[0]),start:w[0]+12*best,i:0,ref:null,hold:0,done:false,fails:0,miss:[],nt:0};
-  $('vxQ').innerHTML=title; $('vxFb').hidden=true; $('vxNow').textContent='—'; $('vxTarget').textContent=fr(seq[0]); vxDraw(); vxMeter(null);
+  const sk=VXS.skip?1:0;
+  VX={seq,off:w.map(x=>x-w[0]),start:w[0]+12*best,i:sk,skip:sk,ref:sk?w[0]+12*best:null,hold:0,done:false,fails:0,miss:[],nt:0};
+  $('vxQ').innerHTML=title; $('vxFb').hidden=true; $('vxNow').textContent='—'; $('vxTarget').textContent=fr(seq[VX.i]); vxDraw(); vxMeter(null);
   $('vxStart').hidden=false; $('vxStop').hidden=true;
 }
-function vxDraw(){ if(!VX) return; $('vxStaff').innerHTML=engraveCols(VX.seq.map((n,i)=>({notes:[n],label:VX.miss.includes(i)?'✗':i<VX.i?'✓':i===VX.i&&!VX.done?'▲':'',ok:i<VX.i&&!VX.miss.includes(i),cur:i===VX.i&&!VX.done})),{colW:VX.seq.length>5?62:90,aria:'Notes à chanter'}); }
+function vxDraw(){ if(!VX) return; $('vxStaff').innerHTML=engraveCols(VX.seq.map((n,i)=>({notes:[n],label:i<VX.skip?'♪':VX.miss.includes(i)?'✗':i<VX.i?'✓':i===VX.i&&!VX.done?'▲':'',ok:i>=VX.skip&&i<VX.i&&!VX.miss.includes(i),cur:i===VX.i&&!VX.done})),{colW:VX.seq.length>5?62:90,aria:'Notes à chanter'}); }
 // ---- Détection de hauteur : autocorrélation sur la plage de la voix (70 à 1100 Hz) ----
 let VXA=null; // {stream, src, an, buf, raf, last, hist, muteUntil}
 function vxPitch(buf,sr){
@@ -1262,10 +1289,10 @@ function vxMeter(c,tol){
   $('vxCents').textContent=ok?'juste':c>0?'trop haut':'trop bas';
   el.style.setProperty('--tol',(tol/200*50)+'%');
 }
-function vxFinish(){ VX.done=true; const L=VX.seq.length, good=L-VX.miss.length; LASTCREDIT=good/L; bump('vx',!VX.miss.length); vxDraw(); vxMeter(null); vxStopListen(); $('vxStart').hidden=true;
+function vxFinish(){ VX.done=true; const L=VX.seq.length-VX.skip, good=L-VX.miss.length; LASTCREDIT=good/L; bump('vx',!VX.miss.length); vxDraw(); vxMeter(null); vxStopListen(); $('vxStart').hidden=true;
   if(!VX.miss.length) fb('vxFb',true,'Bravo !',`Tout est juste : ${VX.seq.map(fr).join(' – ')}.`);
   else fb('vxFb',false,'Pas encore',`${good} note${good>1?'s':''} juste${good>1?'s':''} sur ${L}. Les notes manquées sont marquées ✗ : ${VX.miss.map(i=>fr(VX.seq[i])).join(', ')}. Écoute tout l'exercice, puis recommence.`); }
-function vxSkip(){ if(!VX||VX.done) return; VX.done=true; LASTCREDIT=Math.max(0,VX.i-VX.miss.length)/VX.seq.length; bump('vx',false); vxStopListen(); vxDraw(); fb('vxFb',false,'Exercice passé',`Les notes étaient : ${VX.seq.map(fr).join(' – ')}. Écoute-les, puis recommence ou passe à l'exercice suivant.`); }
+function vxSkip(){ if(!VX||VX.done) return; VX.done=true; LASTCREDIT=Math.max(0,VX.i-VX.skip-VX.miss.length)/(VX.seq.length-VX.skip); bump('vx',false); vxStopListen(); vxDraw(); fb('vxFb',false,'Exercice passé',`Les notes étaient : ${VX.seq.map(fr).join(' – ')}. Écoute-les, puis recommence ou passe à l'exercice suivant.`); }
 function vxListenAll(){ if(!VX) return; const base=VX.ref!==null?Math.round(VX.ref):VX.start; if(VXA) VXA.muteUntil=performance.now()+VX.seq.length*700+800; playNotes(VX.off.map((o,i)=>({m:base+o,t:i*0.65,d:0.6}))); }
 
 // ===== Module 3 : Degrés et grilles =====
@@ -1730,7 +1757,7 @@ function ctxGet(tab){ const L=JSON.stringify(LVL);
   if(tab==='degres') return {DGM,L};
   if(tab==='rythme') return {RYM,L,RDA,RDN};
   if(tab==='ecoute') return {item:STQ.pool?STQ.pool[STQ.order[STQ.i]]:null};
-  return {VXM,L}; }
+  return {VXM,L,S:JSON.stringify(VXS)}; }
 function ctxSet(tab,c){
   if(c.L) try{ LVL=JSON.parse(c.L); }catch(e){}
   if(tab==='quiz'&&c.q!=null){ QZ={bank:CYCLE===1?QUIZ1:QUIZ2,order:[c.q],i:0,good:0}; }
@@ -1738,7 +1765,7 @@ function ctxSet(tab,c){
   if(tab==='degres'){ DGM=c.DGM; seg(DGB,DGM); }
   if(tab==='rythme'){ RYM=c.RYM; RDA=c.RDA||RDA; RDN=c.RDN||RDN; seg(RYB,RYM); ryShow(); }
   if(tab==='ecoute'&&c.item){ STQ={pool:[c.item],order:[0],i:0}; $('stQuiz').hidden=false; $('stList').hidden=true; }
-  if(tab==='chant'){ VXM=c.VXM; seg(VXB,VXM); }
+  if(tab==='chant'){ VXM=c.VXM; seg(VXB,VXM); if(c.S) try{ Object.assign(VXS,JSON.parse(c.S)); }catch(e){} }
 }
 function qfn(tab){ return tab==='quiz'?'quizShow':tab==='intervalles'?'ivNew':tab==='degres'?'dgNew':tab==='rythme'?RYFN[RYM]:tab==='ecoute'?'stShow':'vxNew'; }
 // on enveloppe les fonctions « nouvelle question » de chaque rubrique
@@ -1873,7 +1900,11 @@ function start(){
   vxm.forEach(([id,v])=>$(id).onclick=()=>{VXM=v;seg(vxm,v);vxNew();});
   $('vxTess').innerHTML=Object.entries(VX_TESS).map(([k,v])=>`<option value="${k}">${v.t}</option>`).join(''); $('vxTess').value=VXS.tess;
   $('vxTol').innerHTML=Object.entries(VX_TOL).map(([k,v])=>`<option value="${k}">${v.t}</option>`).join(''); $('vxTol').value=VXS.tol;
-  $('vxTess').onchange=e=>{VXS.tess=e.target.value;vxSave();vxNew();}; $('vxTol').onchange=e=>{VXS.tol=e.target.value;vxSave();};
+  $('vxTess').onchange=e=>{VXS.tess=e.target.value;vxSave();vxNew();};
+  $('vxPat').innerHTML=Object.entries(VX_PAT).map(([k,v])=>`<option value="${k}">${v}</option>`).join(''); $('vxInv').innerHTML=Object.entries(VX_INV).map(([k,v])=>`<option value="${k}">${v}</option>`).join('');
+  $('vxSkipFirst').checked=VXS.skip; $('vxDir').value=VXS.dir; $('vxPat').value=VXS.pat; $('vxInv').value=VXS.inv;
+  $('vxSkipFirst').onchange=e=>{VXS.skip=e.target.checked;vxSave();vxNew();}; $('vxDir').onchange=e=>{VXS.dir=e.target.value;vxSave();vxNew();};
+  $('vxPat').onchange=e=>{VXS.pat=e.target.value;vxSave();vxNew();}; $('vxInv').onchange=e=>{VXS.inv=e.target.value;vxSave();vxNew();}; $('vxTol').onchange=e=>{VXS.tol=e.target.value;vxSave();};
   $('vxStart').onclick=vxStart; $('vxStop').onclick=vxStopListen; $('vxNext').onclick=vxNew; $('vxSkip').onclick=vxSkip;
   $('vxHelp').onclick=()=>{ if(VX&&!VX.done) vxPlayRef(VX.i); }; $('vxAll').onclick=vxListenAll;
   trainSetup(); setCycle(CYCLE); route(); window.addEventListener('hashchange',route);
