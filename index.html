@@ -513,9 +513,10 @@ function cellDurs(cell){ // durées en cases de chaque note jouée, + silence in
   const n=cell.length, idx=[...cell].map((c,i)=>c==='1'?i:-1).filter(i=>i>=0);
   return {idx,lead:idx.length?idx[0]:n,durs:idx.map((p,j)=>(j+1<idx.length?idx[j+1]:n)-p)};
 }
-const BINLAB=k=>[String(k),'i','et','a'], TERLAB=k=>[String(k),'ti','ti'];
+// binaire : 1 et (croches) ; dès qu'il y a des doubles croches dans le temps : 1 ti ke ta
+const BINLAB=(k,c)=>c&&c[1]!=='1'&&c[3]!=='1'?[String(k),'','et','']:[String(k),'ti','ke','ta'], TERLAB=k=>[String(k),'ti','ti'];
 function countString(cells){
-  return cells.map((c,k)=>{const lab=c.length===4?BINLAB(k+1):TERLAB(k+1);const h=[...c].map((x,i)=>x==='1'?lab[i]:null).filter(Boolean);return h.length?h.join(' '):'(silence)';}).join('  |  ');
+  return cells.map((c,k)=>{const lab=c.length===4?BINLAB(k+1,c):TERLAB(k+1);const h=[...c].map((x,i)=>x==='1'?lab[i]:null).filter(Boolean);return h.length?h.join(' '):'(silence)';}).join('  |  ');
 }
 if(typeof module!=='undefined') module.exports={up,pitch,fr,en,IV,CH,chordNotes,scaleOf,deg3,deg4,cellDurs,countString,KEYROOTS};
 </script>
@@ -614,8 +615,8 @@ function engraveRhythm(cells,meter='4/4',opt={}){
   });
   function rBeat(cell,b,x0){
     const n=cell.length, dx=(beatW-20)/n, X=i=>x0+14+dx*i+dx*0.3, ter=n===3;
-    const bb=(opt.bar?b%opt.bar:b)+1, lab=n===4?BINLAB(bb):TERLAB(bb);
-    if(!opt.noLab) for(let i=0;i<n;i++) o.push(`<text x="${X(i)}" y="${ly+40}" text-anchor="middle" font-family="${SANS}" font-size="12" ${i===0?'font-weight="700" fill="currentColor"':MUTED}>${lab[i]}</text>`);
+    const bb=(opt.bar?b%opt.bar:b)+1, lab=n===4?BINLAB(bb,cell):TERLAB(bb);
+    if(!opt.noLab) for(let i=0;i<n;i++) if(lab[i]) o.push(`<text x="${X(i)}" y="${ly+40}" text-anchor="middle" font-family="${SANS}" font-size="12" ${i===0?'font-weight="700" fill="currentColor"':MUTED}>${lab[i]}</text>`);
     const {idx,lead,durs}=cellDurs(cell);
     // silences : binaire en doubles croches (1 = double, 2 = croche, 3 = croche pointée, 4 = noire) ; ternaire en croches (1 = croche, 2 = noire, 3 = noire pointée)
     const rest=(x,d)=>{
@@ -1460,7 +1461,7 @@ function ryNew(){
   $('ryStaff').innerHTML=engraveRhythm(cells,meter);
   $('ryOpts').innerHTML=shuffle(opts).map(x=>`<button type="button" data-v="${x}">${x}</button>`).join('');
   $('ryOpts').querySelectorAll('button').forEach(b=>b.onclick=()=>{const ok=answer($('ryOpts'),b,x=>x.dataset.v===right,'ry');
-    fb('ryFb',ok,ok?'Exact !':'Non.',`On ne dit que les syllabes jouées. Binaire : 1 i et a ; ternaire (triolets, 12/8) : 1 ti ti.${meter==='12/8'?' En 12/8, chaque temps est une noire pointée, divisée en trois croches.':meter==='3/4'?' En 3/4, il y a trois temps par mesure.':''} Écoute la mesure en suivant les syllabes.`); ryPlay();});
+    fb('ryFb',ok,ok?'Exact !':'Non.',`On ne dit que les syllabes jouées. Binaire : 1 et en croches, 1 ti ke ta en doubles croches ; ternaire (triolets, 12/8) : 1 ti ti.${meter==='12/8'?' En 12/8, chaque temps est une noire pointée, divisée en trois croches.':meter==='3/4'?' En 3/4, il y a trois temps par mesure.':''} Écoute la mesure en suivant les syllabes.`); ryPlay();});
 }
 async function ryPlay(){ if(!RY||!RY.cells) return; stopLoop(); const ac=await ready(); if(!ac) return; stopSound(); const beat=RY.meter==='12/8'?0.75:0.62, t0=ac.currentTime+0.12;
   RY.cells.forEach((c,b)=>{ hit(ac,'hp',t0+b*beat,0.9); [...c].forEach((x,i)=>{ if(x==='1') hit(ac,'cl',t0+b*beat+i*beat/c.length); }); }); }
@@ -1531,7 +1532,7 @@ function pgCheck(){ if(!PG) return; const g=PG.g; let miss=0,extra=0;
 function pgMine(){ if(!PG) return; const u=Object.assign({n:16,id:PG.g.id},PG.user); playGroove(u,'#pgGrid td[data-i], #pgGrid th[data-i]'); }
 function pgRight(){ if(PG) playGroove(PG.g,'#pgGrid td[data-i], #pgGrid th[data-i]'); }
 // ---- De la grille à la partition ----
-const posName=i=>{const b=Math.floor(i/4)+1, s=i%4; return s===0?`le ${b}`:`le « ${['','i','et','a'][s]} » du ${b}`;};
+const posName=i=>{const b=Math.floor(i/4)+1, s=i%4; return s===0?`le ${b}`:`le « ${['','ti','ke','ta'][s]} » du ${b}`;};
 function mutate(g,type){ const v=cloneG(g), srt=a=>a.sort((x,y)=>x-y);
   if(type==='move'){ const k=rnd(['bd','bd','sn'].filter(k=>v[k]&&v[k].length&&v[k].length<16)); if(!k) return null;
     const p=rnd(v[k]), c=[p-2,p-1,p+1,p+2].filter(q=>q>=0&&q<16&&!v[k].includes(q)&&!(v.gh||[]).includes(q)); if(!c.length) return null; const q=rnd(c);
