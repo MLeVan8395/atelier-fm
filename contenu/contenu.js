@@ -1,6 +1,6 @@
 // =====================================================================
 //  Atelier FM, musiques actuelles et jazz — contenu pédagogique
-//  Licence : CC BY-SA 4.0 (voir LICENCE-CONTENU.md). Pour contribuer : CONTRIBUER.md
+//  © 2026 Mickael Le Van – Tous droits réservés (voir LICENSE). Pour proposer une idée : CONTRIBUER.md
 //  Règles d'écriture : notes seules en solfège (Do, Ré, Mi…), accords et tonalités
 //  en lettres (C, Am7, « en G »), intervalles notés ♭2, 2, ♭3, 3, 4, ♯4, ♭5, 5…
 //  Dans chaque question à choix, la PREMIÈRE option (o[0]) ou l'indice a est la bonne réponse :

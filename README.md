@@ -47,13 +47,11 @@ Chaque bonne réponse est saluée par un message de félicitations (et une séri
 
 Tu es prof de musiques actuelles et tu veux ajouter des questions, des morceaux, des grilles ou corriger une erreur ? Tout le contenu est dans **un seul fichier**, [`contenu/contenu.js`](contenu/contenu.js), séparé du code.
 
-Voir **[CONTRIBUER.md](CONTRIBUER.md)** : pas besoin d'être développeur.
+Voir **[CONTRIBUER.md](CONTRIBUER.md)** : pas besoin d'être développeur. Les contributions sont intégrées avec l’accord de l’auteur, le projet étant sous « tous droits réservés ».
 
 ## Licences
 
-- **Code** (`index.html`) : licence [MIT](LICENSE).
-- **Contenu pédagogique** (`contenu/`) : [Creative Commons BY-SA 4.0](LICENCE-CONTENU.md). Tu peux le réutiliser et le modifier, en citant l'auteur et en partageant sous la même licence.
-- **Sons** (`sons/`) : piano sous licence CC BY 3.0, batterie et percussions en CC0 (domaine public). Détails dans [sons/LISEZMOI.md](sons/LISEZMOI.md).
+- **Tout le projet** (code, textes, exercices, schémas, partitions) : © 2026 Mickael Le Van, **tous droits réservés** (voir [`LICENSE`](LICENSE)). Reproduction, diffusion et usage commercial interdits sans autorisation écrite de l’auteur. Les éléments de tiers cités restent sous leur propre licence.
 
 ## Crédits
 

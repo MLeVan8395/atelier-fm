@@ -92,4 +92,4 @@ Ouvre `index.html` dans ton navigateur (double-clic) : si la page s'affiche et q
 
 ## Licence de tes contributions
 
-En contribuant, tu acceptes que ton contenu soit publié sous licence **CC BY-SA 4.0** (contenu) ou **MIT** (code), comme le reste du projet.
+Le projet est sous « tous droits réservés » (voir `LICENSE`). En proposant une contribution, tu acceptes que Mickael Le Van l’intègre, la modifie et l’exploite dans ses applications, y compris de façon commerciale.
