@@ -64,6 +64,7 @@ button,select{font:inherit;font-size:.95rem;border-radius:8px;border:1px solid v
 button:hover{border-color:var(--accent)}
 button.primary{background:var(--accent);border-color:var(--accent);color:var(--sheet);font-weight:700}
 button.ghost{background:transparent}
+button.midion{border-color:#7bd389;color:#7bd389}
 button.choice{min-width:76px}
 button.ok{border-color:var(--green);box-shadow:inset 0 0 0 2px var(--green)}
 button.ko{border-color:var(--red);box-shadow:inset 0 0 0 2px var(--red)}
@@ -210,6 +211,7 @@ body.locked .lockhide{display:none!important}
         <button type="button" id="mNote" aria-pressed="false">📝 Mode note</button>
       </div>
       <button type="button" id="install" class="primary" hidden>Installer l'appli</button>
+      <button type="button" id="midiTop" class="ghost" title="Brancher un clavier ou des pads MIDI en USB, puis cliquer">🎹 Clavier MIDI</button>
       <button type="button" id="theme" class="ghost">☀ Clair</button>
       <span class="meta" id="snd" hidden>Chargement des sons…</span>
       <div class="score" id="globalScore">Réponses justes : <b>0</b> sur <b>0</b></div>
@@ -1916,8 +1918,13 @@ function midiMsg(e){ const [st,note,vel]=e.data, cmd=st&0xF0; if(cmd!==0x90||!ve
   const i=midiPad(note); if(i<0) return; const ago=e.timeStamp?(performance.now()-e.timeStamp)/1000:0; pdHit(i,0.35+0.65*vel/127,ago); }
 function midiLearnTxt(){ $('pdMidiTxt').innerHTML=`Frappe sur ton contrôleur le pad pour : <b>${PADS[MLEARN.i].n}</b> (${MLEARN.i+1}/${PADS.length})`; }
 function midiBind(){ if(!MIDI) return; const ins=[...MIDI.inputs.values()]; ins.forEach(inp=>{ inp.onmidimessage=midiMsg; });
-  $('pdLearn').hidden=!ins.length;
+  $('pdLearn').hidden=!ins.length; midiTopTxt(ins);
   $('pdMidiTxt').textContent=ins.length?`Connecté : ${ins.map(x=>x.name).join(', ')}. Par défaut : Do → grosse caisse, Ré/Mi → caisse claire, Fa♯/Sol → charleston, La/Si → charleston ouverte (comme le General MIDI des batteries).${PDS.midimap&&Object.keys(PDS.midimap).length?' Tes pads appris sont utilisés.':''}`:'Aucun contrôleur détecté : branche-le en USB, il sera reconnu tout seul.'; }
+function midiTopTxt(ins){ const b=$('midiTop'); if(!b) return;
+  if(!navigator.requestMIDIAccess){ b.disabled=true; b.textContent='🎹 MIDI indisponible ici'; b.title='iPad, iPhone et Safari ne gèrent pas le MIDI : utilise Chrome ou Edge, sur ordinateur ou tablette Android'; return; }
+  if(!MIDI){ b.textContent='🎹 Clavier MIDI'; b.classList.remove('midion'); return; }
+  b.classList.add('midion'); b.textContent=ins&&ins.length?'🎹 MIDI : '+ins.map(x=>x.name).join(', '):'🎹 MIDI activé (aucun appareil détecté)';
+  b.title='Le contrôleur joue les pads de Rythme → Lecture aux pads'; }
 async function midiStart(quiet){
   if(!navigator.requestMIDIAccess){ if(!quiet) $('pdMidiTxt').textContent='Ce navigateur ne gère pas le MIDI. Utilise Chrome, Edge ou Firefox sur ordinateur ou Android (Safari et iPhone/iPad ne le permettent pas).'; return; }
   try{ MIDI=await navigator.requestMIDIAccess(); MIDI.onstatechange=midiBind; midiBind(); PDS.midi=true; pdSave(); ready(); }
@@ -2246,7 +2253,7 @@ function start(){
   const rys=[['ryModeCount','count'],['ryModeDict','dict'],['ryModeGroove','groove'],['ryModeClave','clave'],['ryModePG','pg'],['ryModeGP','gp'],['ryModePads','pads'],['ryModePlace','place']];
   rys.forEach(([id,v])=>$(id).onclick=()=>{RYM=v;seg(rys,v);ryShow();});
   $('ryNext').onclick=ryNew; $('ryPlay').onclick=ryPlay;
-  $('pdNext').onclick=()=>pdNew(); $('pdGo').onclick=()=>pdRun(false); $('pdDemo').onclick=()=>pdRun(true); $('pdCal').onclick=pdCalibrate; $('pdMidi').onclick=()=>midiStart(false); $('pdLearn').onclick=()=>{ if(!MIDI) return; MLEARN={i:0}; midiLearnTxt(); };
+  $('pdNext').onclick=()=>pdNew(); $('pdGo').onclick=()=>pdRun(false); $('pdDemo').onclick=()=>pdRun(true); $('pdCal').onclick=pdCalibrate; $('pdMidi').onclick=()=>midiStart(false); $('midiTop').onclick=()=>midiStart(false); midiTopTxt(); $('pdLearn').onclick=()=>{ if(!MIDI) return; MLEARN={i:0}; midiLearnTxt(); };
   if(PDS.midi) midiStart(true);
   $('pdTempo').value=PDS.tempo; $('pdTol').value=PDS.tol; $('pdMet').checked=PDS.met; pdLatTxt();
   $('pdTempo').onchange=e=>{ PDS.tempo=e.target.value; pdSave(); }; $('pdTol').onchange=e=>{ PDS.tol=e.target.value; pdSave(); }; $('pdMet').onchange=e=>{ PDS.met=e.target.checked; pdSave(); };
