@@ -394,6 +394,9 @@ body.locked .lockhide{display:none!important}
       <label class="meta"><input type="checkbox" id="pdMet"> Métronome pendant l'exercice</label>
       <button id="pdCal" class="ghost" type="button">Régler la latence</button><span class="meta" id="pdLat"></span>
     </div>
+    <div class="row">
+      <button id="pdMidi" class="ghost" type="button">🎹 Contrôleur MIDI</button><button id="pdLearn" class="ghost" type="button" hidden>Apprendre mes pads</button><span class="meta" id="pdMidiTxt">Branche un clavier ou des pads MIDI en USB, puis clique ici.</span>
+    </div>
     <div class="qtext" id="pdQ" style="margin:0"></div>
     <div class="staffwrap" id="pdStaff"></div>
     <div class="row"><button id="pdGo" class="primary" type="button">▶ Décompte, puis je joue</button><button id="pdDemo" class="ghost" type="button">Écouter le rythme</button><span class="rdcount" id="pdCount" aria-live="polite"></span><span class="meta" id="pdScore"></span></div>
@@ -1894,11 +1897,32 @@ function pdNotes(){ const beat=(PD.meter==='12/8'?1.5:1)*60/PD_BPM[PDS.tempo], o
   Object.entries(PD.voices).forEach(([k,cells])=>cells.forEach((c,b)=>[...c].forEach((x,i)=>{ if(x==='1') out.push({k,t:b*beat+i*beat/c.length,b}); })));
   return {beat,notes:out.sort((a,b)=>a.t-b.t),len:PD.voices[Object.keys(PD.voices)[0]].length*beat}; }
 let PDREC=null;
-function pdHit(i){ const P=PADS[i]; if(!P) return; const el=$('pdPads').querySelector(`[data-i="${i}"]`);
+// ago = délai (en s) entre le geste et maintenant (contrôleur MIDI : horodatage précis de l'événement)
+function pdHit(i,vel=1,ago=0){ const P=PADS[i]; if(!P) return; const el=$('pdPads').querySelector(`[data-i="${i}"]`);
   if(el){ el.classList.add('hit'); setTimeout(()=>el.classList.remove('hit'),110); }
-  if(!AC) return ready(); hit(AC,P.k,AC.currentTime,1);
-  if(PDREC&&PDREC.on) PDREC.hits.push({k:P.k,t:AC.currentTime});
-  if(CAL&&CAL.on) CAL.taps.push(AC.currentTime); }
+  if(!AC) return ready(); const t=AC.currentTime-Math.min(0.1,Math.max(0,ago)); hit(AC,P.k,AC.currentTime,vel);
+  if(PDREC&&PDREC.on) PDREC.hits.push({k:P.k,t});
+  if(CAL&&CAL.on) CAL.taps.push(t); }
+// ---- Contrôleur MIDI (Web MIDI : Chrome, Edge, Firefox, Opera ; pas Safari ni iPhone/iPad) ----
+// Correspondance par défaut, qui suit le General MIDI des batteries et marche aussi sur un clavier :
+// Do, Do♯ → grosse caisse ; Ré, Ré♯, Mi → caisse claire ; Fa, Fa♯, Sol, Sol♯ → charleston ; La, La♯, Si → charleston ouverte
+const MIDI_PC=['bd','bd','sn','sn','sn','hh','hh','hh','hh','ho','ho','ho'];
+let MIDI=null, MLEARN=null;
+function midiPad(note){ const m=PDS.midimap&&PDS.midimap[note]; const k=m||MIDI_PC[note%12]; return PADS.findIndex(P=>P.k===k); }
+function midiMsg(e){ const [st,note,vel]=e.data, cmd=st&0xF0; if(cmd!==0x90||!vel) return;
+  if(MLEARN){ const P=PADS[MLEARN.i]; PDS.midimap=PDS.midimap||{}; Object.keys(PDS.midimap).forEach(n=>{ if(PDS.midimap[n]===P.k) delete PDS.midimap[n]; }); PDS.midimap[note]=P.k; pdHit(MLEARN.i);
+    MLEARN.i++; if(MLEARN.i>=PADS.length){ MLEARN=null; pdSave(); $('pdMidiTxt').textContent='Pads appris : ils sont mémorisés sur cet appareil.'; } else midiLearnTxt(); return; }
+  if(CURVIEW!=='rythme'||RYM!=='pads') return;
+  const i=midiPad(note); if(i<0) return; const ago=e.timeStamp?(performance.now()-e.timeStamp)/1000:0; pdHit(i,0.35+0.65*vel/127,ago); }
+function midiLearnTxt(){ $('pdMidiTxt').innerHTML=`Frappe sur ton contrôleur le pad pour : <b>${PADS[MLEARN.i].n}</b> (${MLEARN.i+1}/${PADS.length})`; }
+function midiBind(){ if(!MIDI) return; const ins=[...MIDI.inputs.values()]; ins.forEach(inp=>{ inp.onmidimessage=midiMsg; });
+  $('pdLearn').hidden=!ins.length;
+  $('pdMidiTxt').textContent=ins.length?`Connecté : ${ins.map(x=>x.name).join(', ')}. Par défaut : Do → grosse caisse, Ré/Mi → caisse claire, Fa♯/Sol → charleston, La/Si → charleston ouverte (comme le General MIDI des batteries).${PDS.midimap&&Object.keys(PDS.midimap).length?' Tes pads appris sont utilisés.':''}`:'Aucun contrôleur détecté : branche-le en USB, il sera reconnu tout seul.'; }
+async function midiStart(quiet){
+  if(!navigator.requestMIDIAccess){ if(!quiet) $('pdMidiTxt').textContent='Ce navigateur ne gère pas le MIDI. Utilise Chrome, Edge ou Firefox sur ordinateur ou Android (Safari et iPhone/iPad ne le permettent pas).'; return; }
+  try{ MIDI=await navigator.requestMIDIAccess(); MIDI.onstatechange=midiBind; midiBind(); PDS.midi=true; pdSave(); ready(); }
+  catch(e){ if(!quiet) $('pdMidiTxt').textContent='Accès MIDI refusé. Autorise le MIDI pour ce site dans les réglages du navigateur (et ouvre l\'appli depuis son adresse GitHub, pas dans un aperçu).'; }
+}
 document.addEventListener('keydown',e=>{ if(e.repeat||e.ctrlKey||e.metaKey||e.altKey) return; if(/input|select|textarea/i.test((e.target.tagName||''))) return;
   if(CURVIEW!=='rythme'||RYM!=='pads') return; const i=PADS.findIndex(P=>P.key===e.key.toLowerCase()); if(i>=0){ e.preventDefault(); pdHit(i); } });
 const pdLatency=()=>PDS.lat!==null&&PDS.lat!==undefined?PDS.lat:((AC&&(AC.outputLatency||0))+(AC&&AC.baseLatency||0));
@@ -2222,7 +2246,8 @@ function start(){
   const rys=[['ryModeCount','count'],['ryModeDict','dict'],['ryModeGroove','groove'],['ryModeClave','clave'],['ryModePG','pg'],['ryModeGP','gp'],['ryModePads','pads'],['ryModePlace','place']];
   rys.forEach(([id,v])=>$(id).onclick=()=>{RYM=v;seg(rys,v);ryShow();});
   $('ryNext').onclick=ryNew; $('ryPlay').onclick=ryPlay;
-  $('pdNext').onclick=()=>pdNew(); $('pdGo').onclick=()=>pdRun(false); $('pdDemo').onclick=()=>pdRun(true); $('pdCal').onclick=pdCalibrate;
+  $('pdNext').onclick=()=>pdNew(); $('pdGo').onclick=()=>pdRun(false); $('pdDemo').onclick=()=>pdRun(true); $('pdCal').onclick=pdCalibrate; $('pdMidi').onclick=()=>midiStart(false); $('pdLearn').onclick=()=>{ if(!MIDI) return; MLEARN={i:0}; midiLearnTxt(); };
+  if(PDS.midi) midiStart(true);
   $('pdTempo').value=PDS.tempo; $('pdTol').value=PDS.tol; $('pdMet').checked=PDS.met; pdLatTxt();
   $('pdTempo').onchange=e=>{ PDS.tempo=e.target.value; pdSave(); }; $('pdTol').onchange=e=>{ PDS.tol=e.target.value; pdSave(); }; $('pdMet').onchange=e=>{ PDS.met=e.target.checked; pdSave(); };
   $('rdNext').onclick=()=>rdNew(); $('rdPlay').onclick=rdPlay; $('rdBack').onclick=rdBack; $('rdClear').onclick=()=>{ if(RD&&!RD.done){ RD.user.fill(null); RD.cur=0; rdDrawUser(); } }; $('rdCheck').onclick=rdCheck;
