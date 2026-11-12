@@ -471,7 +471,7 @@ body.locked .lockhide{display:none!important}
 
 <section class="panel" id="p-chant" aria-labelledby="h-vx">
   <h2 id="h-vx">Chant</h2>
-  <p class="lead">Écoute la note de départ au piano, puis chante (intervalles, gammes avec motifs, arpèges et renversements, en montant ou en descendant) : l'atelier écoute ta voix au micro et valide chaque note tenue juste. Chante dans ta tessiture, à l'octave qui te convient. Le son du micro est analysé dans la page : il n'est ni enregistré ni envoyé.</p>
+  <p class="lead">Écoute la note de départ au piano, puis chante (intervalles, gammes avec motifs, arpèges et renversements, en montant ou en descendant) : l'atelier écoute ta voix au micro et valide chaque note tenue juste. Chante dans ta tessiture, à l'octave qui te convient. Le son du micro est analysé dans la page et n'est jamais envoyé : l'enregistrement de ton chant, pour le réécouter, reste sur l'appareil et s'efface à l'exercice suivant. En mode note, tu chantes tout l'exercice en mesure (une note par temps) et l'atelier te donne ta justesse note par note.</p>
   <div class="sub" role="group" aria-label="Exercice">
     <button type="button" id="vxModeInt" aria-pressed="true">Intervalles</button>
     <button type="button" id="vxModeGam" aria-pressed="false">Gammes</button>
@@ -503,9 +503,11 @@ body.locked .lockhide{display:none!important}
       <button id="vxHelp" class="ghost" type="button">Réentendre la note attendue</button>
       <button id="vxAll" class="ghost" type="button">Écouter tout l'exercice</button>
       <button id="vxSkip" class="ghost" type="button">Je passe</button>
+      <span class="rdcount" id="vxCount" aria-live="polite"></span>
       <span class="meta" id="vxScore"></span>
     </div>
     <div class="fb" id="vxFb" hidden></div>
+    <div class="stack" id="vxAna" hidden></div>
     <div class="row"><button id="vxNext" class="primary" type="button">Exercice suivant</button></div>
   </div>
 </section>
@@ -1310,7 +1312,9 @@ function vxNew(){
   const sk=VXS.skip?1:0;
   VX={seq,off:w.map(x=>x-w[0]),start:w[0]+12*best,i:sk,skip:sk,ref:sk?w[0]+12*best:null,hold:0,done:false,fails:0,miss:[],nt:0};
   $('vxQ').innerHTML=title; $('vxFb').hidden=true; $('vxNow').textContent='—'; $('vxTarget').textContent=fr(seq[VX.i]); vxDraw(); vxMeter(null);
-  $('vxStart').hidden=false; $('vxStop').hidden=true;
+  $('vxStart').hidden=false; $('vxStop').hidden=true; $('vxAna').hidden=true; $('vxCount').textContent=''; vxRecClear();
+  VX.timed=!!(SER&&!SER.review);
+  $('vxStart').textContent=VX.timed?`🎤 Note de départ, décompte, puis je chante tout en mesure (une note par temps)`:'🎤 Écouter la note de départ et chanter';
 }
 function vxDraw(){ if(!VX) return; $('vxStaff').innerHTML=engraveCols(VX.seq.map((n,i)=>({notes:[n],label:i<VX.skip?'♪':VX.miss.includes(i)?'✗':i<VX.i?'✓':i===VX.i&&!VX.done?'▲':'',ok:i>=VX.skip&&i<VX.i&&!VX.miss.includes(i),cur:i===VX.i&&!VX.done})),{colW:VX.seq.length>5?62:90,aria:'Notes à chanter'}); }
 // ---- Détection de hauteur : autocorrélation sur la plage de la voix (70 à 1100 Hz) ----
@@ -1334,32 +1338,37 @@ async function vxStart(){
       const stream=await navigator.mediaDevices.getUserMedia({audio:{echoCancellation:false,noiseSuppression:false,autoGainControl:false}});
       const src=ac.createMediaStreamSource(stream), an=ac.createAnalyser(); an.fftSize=2048; src.connect(an);
       VXA={stream,src,an,buf:new Float32Array(2048),raf:null,last:0,hist:[],muteUntil:0};
-    }catch(e){ fb('vxFb',null,'Accès au micro refusé','Autorise le micro pour cette page (icône à gauche de l\'adresse, ou réglages du navigateur), puis réessaie. Le son n\'est ni enregistré ni envoyé. Dans la version de l\'atelier ouverte dans Claude, le micro est toujours bloqué : utilise le site ou l\'appli installée.'); return; }
+    }catch(e){ fb('vxFb',null,'Accès au micro refusé','Autorise le micro pour cette page (icône à gauche de l\'adresse, ou réglages du navigateur), puis réessaie. Le son n\'est jamais envoyé : l\'enregistrement reste sur l\'appareil. Dans la version de l\'atelier ouverte dans Claude, le micro est toujours bloqué : utilise le site ou l\'appli installée.'); return; }
   }
-  $('vxStart').hidden=true; $('vxStop').hidden=false; $('vxFb').hidden=true;
+  $('vxStart').hidden=true; $('vxStop').hidden=false; $('vxFb').hidden=true; $('vxAna').hidden=true;
+  vxRecStart();
+  VX.log=[]; VX.t0=performance.now()/1000; VX.at=[]; VX.at[VX.i]=0; VX.found=[];
+  if(VX.timed) return vxTimedRun(ac);
   vxPlayRef(0);
   const loop=t=>{ if(!VXA) return; VXA.raf=requestAnimationFrame(loop); if(t-VXA.last<45) return; const dt=Math.min(0.2,(t-VXA.last)/1000); VXA.last=t; vxTick(dt); };
   VXA.raf=requestAnimationFrame(loop);
 }
-function vxStopListen(){ if(VXA){ cancelAnimationFrame(VXA.raf); try{VXA.stream.getTracks().forEach(t=>t.stop());}catch(e){} try{VXA.src.disconnect();}catch(e){} VXA=null; } if($('vxStart')){ $('vxStart').hidden=false; $('vxStop').hidden=true; } }
+function vxStopListen(){ if(VXA){ cancelAnimationFrame(VXA.raf); vxRecStop(); try{VXA.stream.getTracks().forEach(t=>t.stop());}catch(e){} try{VXA.src.disconnect();}catch(e){} VXA=null; } if($('vxStart')){ $('vxStart').hidden=false; $('vxStop').hidden=true; } }
 // note attendue (MIDI) : la première dans l'octave jouée ; ensuite, relative à la note réellement chantée au départ
 const vxTargetMidi=()=>VX.ref===null?VX.start+VX.off[VX.i]:VX.ref+VX.off[VX.i];
 function vxPlayRef(i){ if(!VX) return; const m=i===0||VX.ref===null?VX.start+VX.off[i]:Math.round(VX.ref)+VX.off[i]; if(VXA) VXA.muteUntil=performance.now()+1500; playNotes([{m,t:0,d:1.2}]); }
 function vxTick(dt){
   if(!VX||VX.done) return;
   if(performance.now()<VXA.muteUntil){ vxMeter(null); return; } // on n'écoute pas pendant que le piano joue
-  if(SER&&!SER.review){ VX.nt+=dt; if(VX.nt>10){ VX.miss.push(VX.i); VX.i++; VX.nt=0; VX.hold=0; VXA.hist=[]; if(VX.i>=VX.seq.length) return vxFinish(); $('vxTarget').textContent=fr(VX.seq[VX.i]); vxDraw(); return; } } // mode note : 10 s par note
+  if(SER&&!SER.review){ VX.nt+=dt; if(VX.nt>10){ VX.miss.push(VX.i); VX.i++; VX.at[VX.i]=performance.now()/1000-VX.t0; VX.nt=0; VX.hold=0; VXA.hist=[]; if(VX.i>=VX.seq.length) return vxFinish(); $('vxTarget').textContent=fr(VX.seq[VX.i]); vxDraw(); return; } } // mode note : 10 s par note
   VXA.an.getFloatTimeDomainData(VXA.buf);
   const f=vxPitch(VXA.buf,VXA.an.context.sampleRate);
-  if(!f){ VXA.hist=[]; VX.hold=Math.max(0,VX.hold-dt); vxMeter(null); return; }
+  const now=performance.now()/1000-VX.t0;
+  if(!f){ VXA.hist=[]; VX.hold=Math.max(0,VX.hold-dt); vxMeter(null); VX.log.push({t:now,i:VX.i,c:null}); return; }
   VXA.hist.push(midiOf(f)); if(VXA.hist.length>5) VXA.hist.shift();
   const m=VXA.hist.slice().sort((a,b)=>a-b)[VXA.hist.length>>1];
   let tg=vxTargetMidi();
   if(VX.ref===null) tg+=12*Math.round((m-tg)/12); // la note de départ peut être chantée à n'importe quelle octave
   const cents=(m-tg)*100, tol=VX_TOL[VXS.tol].c;
+  VX.log.push({t:now,i:VX.i,c:cents});
   $('vxNow').textContent=`${fr(nameOfMidi(Math.round(m)))}`;
   vxMeter(Math.abs(cents)>200?(cents>0?200:-200):cents,tol);
-  if(Math.abs(cents)<=tol){ VX.hold+=dt; if(VX.hold>=0.45){ if(VX.ref===null) VX.ref=tg-VX.off[VX.i]; VX.i++; VX.hold=0; VX.nt=0; VXA.hist=[];
+  if(Math.abs(cents)<=tol){ VX.hold+=dt; if(VX.hold>=0.45){ if(VX.ref===null) VX.ref=tg-VX.off[VX.i]; VX.found[VX.i]=now; VX.i++; VX.at[VX.i]=now; VX.hold=0; VX.nt=0; VXA.hist=[];
       if(VX.i>=VX.seq.length) return vxFinish();
       $('vxTarget').textContent=fr(VX.seq[VX.i]); vxDraw(); } }
   else VX.hold=Math.max(0,VX.hold-dt*0.5);
@@ -1376,7 +1385,8 @@ function vxMeter(c,tol){
 }
 function vxFinish(){ VX.done=true; const L=VX.seq.length-VX.skip, good=L-VX.miss.length; LASTCREDIT=good/L; bump('vx',!VX.miss.length); vxDraw(); vxMeter(null); vxStopListen(); $('vxStart').hidden=true;
   if(!VX.miss.length) fb('vxFb',true,'Bravo !',`Tout est juste : ${VX.seq.map(fr).join(' – ')}.`);
-  else fb('vxFb',false,'Pas encore',`${good} note${good>1?'s':''} juste${good>1?'s':''} sur ${L}. Les notes manquées sont marquées ✗ : ${VX.miss.map(i=>fr(VX.seq[i])).join(', ')}. Écoute tout l'exercice, puis recommence.`); }
+  else fb('vxFb',false,'Pas encore',`${good} note${good>1?'s':''} juste${good>1?'s':''} sur ${L}. Les notes manquées sont marquées ✗ : ${VX.miss.map(i=>fr(VX.seq[i])).join(', ')}. Écoute tout l'exercice, puis recommence.`);
+  vxAnalyseA(); }
 function vxSkip(){ if(!VX||VX.done) return; VX.done=true; LASTCREDIT=Math.max(0,VX.i-VX.skip-VX.miss.length)/(VX.seq.length-VX.skip); bump('vx',false); vxStopListen(); vxDraw(); fb('vxFb',false,'Exercice passé',`Les notes étaient : ${VX.seq.map(fr).join(' – ')}. Écoute-les, puis recommence ou passe à l'exercice suivant.`); }
 function vxListenAll(){ if(!VX) return; const base=VX.ref!==null?Math.round(VX.ref):VX.start; if(VXA) VXA.muteUntil=performance.now()+VX.seq.length*700+800; playNotes(VX.off.map((o,i)=>({m:base+o,t:i*0.65,d:0.6}))); }
 
@@ -1854,6 +1864,72 @@ function setTheme(t){ document.documentElement.setAttribute('data-theme',t); try
 // premier affichage sans son (le navigateur n'autorise le son qu'après un clic)
 function ivNewQuiet(){MUTE=true;ivNew();MUTE=false;}
 function dgNewQuiet(){MUTE=true;dgNew();MUTE=false;}
+// ===== Enregistrement du chant et analyse de la justesse =====
+// L'enregistrement reste dans la mémoire de l'appareil : il n'est ni sauvegardé ni envoyé, et disparaît à l'exercice suivant.
+let VXREC=null; // {url, audio}
+function vxRecClear(){ if(VXREC){ try{ VXREC.audio&&VXREC.audio.pause(); }catch(e){} if(VXREC.url) URL.revokeObjectURL(VXREC.url); } VXREC=null; }
+function vxRecStart(){ vxRecClear(); if(!VXA||typeof MediaRecorder==='undefined') return;
+  try{ const r=new MediaRecorder(VXA.stream), ch=[]; r.ondataavailable=e=>{ if(e.data&&e.data.size) ch.push(e.data); };
+    r.onstop=()=>{ if(!ch.length) return; VXREC={url:URL.createObjectURL(new Blob(ch,{type:r.mimeType||'audio/webm'}))}; const b=$('vxRecPlay'); if(b) b.disabled=false; };
+    r.start(); VXA.rec=r; }catch(e){} }
+function vxRecStop(){ if(VXA&&VXA.rec&&VXA.rec.state!=='inactive') try{ VXA.rec.stop(); }catch(e){} }
+function vxRecPlay(){ if(!VXREC||!VXREC.url) return; stopLoop(); if(VXREC.audio) VXREC.audio.pause(); VXREC.audio=new Audio(VXREC.url); VXREC.audio.play().catch(()=>{}); }
+const centsTxt=c=>`${c>0?'+':c<0?'−':''}${Math.abs(Math.round(c))} cents`;
+const vxCls=(c,tol)=>c===null?'miss':Math.abs(c)<=tol?'ok':Math.abs(c)<=50?'near':'off';
+const VXCOL={ok:'var(--green)',near:'var(--orange)',off:'var(--red)',miss:'var(--red)'};
+function vxVerdict(c,tol){ if(c===null) return 'non chanté'; const a=Math.abs(c); return a<=tol?'juste':a<=50?(c<0?'un peu bas':'un peu haut'):(c<0?'trop bas':'trop haut'); }
+// courbe : la voix (en cents autour de chaque note attendue) au-dessus des cases des notes
+function vxCurve(segs,pts,total){ const W=720,H=170,left=8,x=t=>left+t/total*(W-left-8), y=c=>H/2-Math.max(-150,Math.min(150,c))/150*(H/2-14), tol=VX_TOL[VXS.tol].c, o=[];
+  o.push(`<rect x="${left}" y="${y(tol)}" width="${W-left-8}" height="${y(-tol)-y(tol)}" style="fill:var(--green)" opacity=".13"/><line x1="${left}" y1="${H/2}" x2="${W-8}" y2="${H/2}" style="stroke:var(--green)" stroke-dasharray="4 4"/>`);
+  o.push(`<text x="${W-10}" y="14" text-anchor="end" font-size="11" font-family="${SANS}" ${MUTED}>trop haut</text><text x="${W-10}" y="${H-5}" text-anchor="end" font-size="11" font-family="${SANS}" ${MUTED}>trop bas</text>`);
+  segs.forEach(g=>{ o.push(`<line x1="${x(g.a)}" y1="8" x2="${x(g.a)}" y2="${H-8}" style="stroke:var(--line)"/><text x="${x(g.a)+4}" y="${H-8}" font-size="12" font-weight="700" font-family="${SANS}" fill="currentColor">${fr(g.n)}</text>`); });
+  let d='', on=false; pts.forEach(p=>{ if(p.c===null){ on=false; return; } d+=(on?'L':'M')+x(p.t).toFixed(1)+' '+y(p.c).toFixed(1); on=true; });
+  o.push(`<path d="${d}" fill="none" style="stroke:var(--accent)" stroke-width="2.2" stroke-linejoin="round"/>`);
+  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${W} ${H}" style="width:100%;height:auto;color:var(--ink)" role="img" aria-label="Courbe de justesse">${o.join('')}</svg>`; }
+function vxAnaShow(title,rows,curve,pct){
+  $('vxAna').innerHTML=`<h4 style="margin:0">${title}${pct!==null?` : <span style="color:var(--accent)">${pct} %</span>`:''}</h4>${curve}
+    <table class="bilan"><tbody>${rows.map(r=>`<tr><td><b>${r.n}</b> <span class="meta">${r.extra||''}</span></td><td style="color:${VXCOL[r.cls]}">${r.v}</td></tr>`).join('')}</tbody></table>
+    <div class="row" style="margin:0"><button type="button" class="ghost" id="vxRecPlay" ${VXREC&&VXREC.url?'':'disabled'}>▶ Mon enregistrement</button><button type="button" class="ghost" id="vxRefPlay">▶ Les notes justes</button></div>
+    <p class="meta" style="margin:0">L'enregistrement reste sur cet appareil : il n'est ni sauvegardé ni envoyé, et il est effacé à l'exercice suivant.</p>`;
+  $('vxAna').hidden=false; $('vxRecPlay').onclick=vxRecPlay; $('vxRefPlay').onclick=vxListenAll; }
+// A (entraînement, note par note) : justesse pendant la tenue, temps pour trouver, arrivée par en dessous ou au-dessus
+function vxAnalyseA(){ if(!VX.log||!VX.log.length) return; const tol=VX_TOL[VXS.tol].c, rows=[], segs=[], cs=[];
+  for(let i=VX.skip;i<VX.seq.length;i++){ const a=VX.at[i]||0, f=VX.found[i]; segs.push({a,n:VX.seq[i]});
+    if(f===undefined){ rows.push({n:fr(VX.seq[i]),v:'non trouvé',cls:'miss'}); continue; }
+    const hold=VX.log.filter(p=>p.i===i&&p.c!==null&&p.t>=f-0.5&&p.t<=f).map(p=>p.c).sort((x,y)=>x-y), c=hold.length?hold[hold.length>>1]:0; cs.push(Math.abs(c));
+    const first=VX.log.find(p=>p.i===i&&p.c!==null&&Math.abs(p.c)<300), app=first&&Math.abs(first.c)>tol?(first.c<0?'arrivé par en dessous':'arrivé par au-dessus'):'attaque juste';
+    rows.push({n:fr(VX.seq[i]),extra:`trouvé en ${String(Math.round((f-a)*10)/10).replace('.',',')} s · ${app}`,v:`${centsTxt(c)} · ${vxVerdict(c,tol)}`,cls:vxCls(c,tol)}); }
+  const total=Math.max(1,(VX.log[VX.log.length-1]||{t:1}).t), mean=cs.length?Math.round(cs.reduce((x,y)=>x+y,0)/cs.length):null;
+  vxAnaShow(`Ton chant, note par note${mean!==null?` (écart moyen ${mean} cents)`:''}`,rows,vxCurve(segs,VX.log.filter(p=>p.i>=VX.skip&&p.i<VX.seq.length),total),null); }
+// B (mode note) : tout l'exercice en mesure, une note par temps, analysé à la fin
+const VX_BPM=60;
+async function vxTimedRun(ac){ const id=LOOPID, beat=60/VX_BPM, n=VX.seq.length, B=4, t0=ac.currentTime+1.6, s0=t0+B*beat;
+  // note de départ au piano, décompte d'une mesure, puis métronome discret
+  stopSound(); pianoNote(ac,VX.start,ac.currentTime+0.05,1.2,0.8); for(let k=0;k<B;k++) hit(ac,'xs',t0+k*beat,k===0?1:0.75); for(let k=0;k<n;k++) hit(ac,'hp',s0+k*beat,0.4);
+  if(VX.skip) pianoNote(ac,VX.start,s0,beat*0.9,0.8);
+  VX.s0=s0; VX.beat=beat; VX.log=[]; const el=$('vxCount'); $('vxTarget').textContent=fr(VX.seq[VX.skip]);
+  const loop=()=>{ if(!VXA||!VX||VX.done) return; VXA.raf=requestAnimationFrame(loop); const t=ac.currentTime-s0;
+    if(t<0){ const k=Math.floor((t+B*beat)/beat); el.textContent=k>=0?String(k+1):''; return; }
+    const i=Math.floor(t/beat); if(i>=n){ el.textContent=''; return vxTimedEnd(); }
+    if(i!==VX.i){ VX.i=i; el.textContent='♪'; $('vxTarget').textContent=fr(VX.seq[i]); vxDraw(); }
+    VXA.an.getFloatTimeDomainData(VXA.buf); const f=vxPitch(VXA.buf,ac.sampleRate), m=f?midiOf(f):null; VX.log.push({t,m});
+    if(m!==null){ $('vxNow').textContent=fr(nameOfMidi(Math.round(m))); const tg=VX.start+VX.off[i]; let c=(m-tg)*100; if(!VX.skip) c-=1200*Math.round(c/1200); vxMeter(Math.max(-200,Math.min(200,c)),VX_TOL[VXS.tol].c); } else vxMeter(null); };
+  VX.i=VX.skip; vxDraw(); VXA.raf=requestAnimationFrame(loop); }
+function vxTimedEnd(){ if(VX.done) return; VX.done=true; const tol=VX_TOL[VXS.tol].c, beat=VX.beat, n=VX.seq.length, med=a=>{ const b=a.slice().sort((x,y)=>x-y); return b[b.length>>1]; };
+  const per=[]; for(let i=0;i<n;i++){ const fr0=VX.log.filter(p=>p.t>=i*beat+0.25*beat&&p.t<(i+1)*beat-0.05), v=fr0.filter(p=>p.m!==null); per.push(v.length>=Math.max(3,fr0.length*0.3)?med(v.map(p=>p.m)):null); }
+  // octave libre (sauf si la 1re note est jouée au piano) : la même pour tout l'exercice
+  const diffs=per.map((m,i)=>m===null||i<VX.skip?null:m-(VX.start+VX.off[i])).filter(x=>x!==null), k=VX.skip||!diffs.length?0:Math.round(med(diffs)/12);
+  const rows=[], segs=[], pts=[]; let sum=0, cnt=0, miss=[];
+  for(let i=VX.skip;i<n;i++){ const tg=VX.start+VX.off[i]+12*k, c=per[i]===null?null:(per[i]-tg)*100, cls=vxCls(c,tol); segs.push({a:i*beat,n:VX.seq[i]});
+    sum+=cls==='ok'?1:cls==='near'?0.5:0; cnt++; if(cls!=='ok') miss.push(i);
+    rows.push({n:fr(VX.seq[i]),extra:`temps ${i+1}`,v:c===null?'non chanté':`${centsTxt(c)} · ${vxVerdict(c,tol)}`,cls}); }
+  VX.log.forEach(p=>{ if(p.t<0||p.t>=n*beat) return; const i=Math.floor(p.t/beat); if(i<VX.skip) return; pts.push({t:p.t,c:p.m===null?null:Math.max(-150,Math.min(150,(p.m-(VX.start+VX.off[i]+12*k))*100))}); });
+  VX.miss=miss.filter(i=>per[i]===null||Math.abs((per[i]-(VX.start+VX.off[i]+12*k))*100)>50); VX.i=n;
+  const score=cnt?sum/cnt:0, pct=Math.round(score*100); LASTCREDIT=score; bump('vx',score>=0.85);
+  vxStopListen(); vxDraw(); vxMeter(null); $('vxStart').hidden=true;
+  fb('vxFb',score>=0.85,score>=0.85?'Bravo !':'Pas encore',`<b>${pct} %</b> de justesse (vert = juste, orange = à moins d'un quart de ton, rouge = faux ou non chanté). Regarde la courbe, écoute ton enregistrement, puis les notes justes.`);
+  vxAnaShow('Ta justesse, temps par temps',rows,vxCurve(segs,pts,n*beat),pct); }
+
 // ===== Lecture rythmique aux pads : on lit, on joue sur 4 pads, l'atelier mesure la précision =====
 const PADS=[{k:'hh',n:'Charleston',key:'f',c:'#e8b93c'},{k:'sn',n:'Caisse claire',key:'g',c:'#6fa8ff'},{k:'bd',n:'Grosse caisse',key:'h',c:'#ff7a6b'},{k:'ho',n:'Charleston ouverte',key:'j',c:'#59cf8f'}];
 const PD_TXT={1:['Niveau 1 : une ligne (caisse claire), noires, croches et soupirs','Niveau 2 : une ligne, rythmes plus riches : doubles croches, silences, contretemps, triolets en alternance avec les croches','Niveau 3 : deux lignes (caisse claire et grosse caisse), une main sur chaque pad','Niveau 4 : grooves à 4 pads, en notation de batterie'],
