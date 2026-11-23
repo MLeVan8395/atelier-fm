@@ -621,6 +621,14 @@ const SP=10,H=SP/2,BOT=30; // portée en clé de sol, Mi4 sur la ligne du bas
 // Les SVG utilisent currentColor : ils suivent le thème clair / sombre sans être redessinés.
 const INK='currentColor', MUTED='style="fill:var(--muted)"';
 function glyph(name,x,y,size){const g=GLYPH[name];const k=size/g.upm;return `<path d="${g.d}" transform="translate(${x} ${y}) scale(${k} ${-k})" fill="currentColor"/>`;}
+// Altération (a = 1 dièse, -1 bémol, -2 double bémol, 0 bécarre) dont le bord droit est en xr, centrée sur la hauteur y de la note.
+// Taille d'imprimé (environ 2,2 interlignes de haut) : bien lisible sur un téléphone.
+function accSvg(a,xr,y,size=30){ const k=size/2048;
+  if(a===1) return glyph('sharp',xr-820*k,y+748*k,size);
+  if(a===-1) return glyph('flat',xr-800*k,y+400*k,size);
+  if(a===-2) return glyph('flat',xr-800*k,y+400*k,size)+glyph('flat',xr-1550*k,y+400*k,size);
+  const s=size/30, x1=xr-9*s, x2=xr-2*s; // bécarre
+  return `<path d="M${x1} ${y-12*s}V${y+5*s}M${x2} ${y-5*s}V${y+12*s}" stroke="currentColor" stroke-width="${1.5*s}"/><path d="M${x1} ${y-2*s}L${x2} ${y-5*s}L${x2} ${y-1.6*s}L${x1} ${y+1.4*s}ZM${x1} ${y+5*s}L${x2} ${y+2*s}L${x2} ${y+5.4*s}L${x1} ${y+8.4*s}Z" fill="currentColor"/>`; }
 let CYCLE=2;
 try{const c=+localStorage.getItem('atelier-fm-cycle'); if(c===1||c===2) CYCLE=c;}catch(e){}
 
@@ -646,9 +654,7 @@ function engraveCols(cols,opt={}){
       o.push(`<ellipse cx="${x}" cy="${y}" rx="7" ry="4.6" fill="none" ${col.ok?'style="stroke:var(--green)"':col.cur?'style="stroke:var(--accent)"':`stroke="${INK}"`} stroke-width="2.6" transform="rotate(-15 ${x} ${y})"/>`);
       if(n.a){
         let c=0; while(accCols.some(a=>a.c===c&&Math.abs(a.p-p)<6)) c++; accCols.push({c,p});
-        const ax=x0-20-c*11;
-        if(Math.abs(n.a)===2) o.push(glyph('flat',ax-7,y+3,15)+glyph('flat',ax,y+3,15));
-        else o.push(glyph(n.a===1?'sharp':'flat',ax,y+(n.a===-1?3:5),15));
+        o.push(accSvg(n.a,x0-10-c*(Math.abs(n.a)===2?22:13),y));
       }
     });
     if(col.label) o.push(`<text x="${x0}" y="${top+4*SP+44}" text-anchor="middle" font-family="${SANS}" font-size="13" font-weight="700" ${col.ok?'style="fill:var(--green)"':col.cur?'style="fill:var(--accent)"':MUTED}>${col.label}</text>`);
@@ -673,10 +679,10 @@ function engraveGrand(notes,bass){
   notes.slice().sort((a,b)=>dpos(a)-dpos(b)).forEach(n=>{ const p=dpos(n), y=head(p,top,BOT,n);
     let shift=false; if(prevP!==null&&p-prevP===1&&!prevShift) shift=true; prevShift=shift; prevP=p; const x=x0+(shift?13:0);
     o.push(`<ellipse cx="${x}" cy="${y}" rx="7" ry="4.6" fill="none" stroke="${INK}" stroke-width="2.6" transform="rotate(-15 ${x} ${y})"/>`);
-    if(n.a){ let c=0; while(accCols.some(a=>a.c===c&&Math.abs(a.p-p)<6)) c++; accCols.push({c,p}); o.push(glyph(n.a===1?'sharp':'flat',x0-20-c*11,y+(n.a===-1?3:5),15)); } });
+    if(n.a){ let c=0; while(accCols.some(a=>a.c===c&&Math.abs(a.p-p)<6)) c++; accCols.push({c,p}); o.push(accSvg(n.a,x0-10-c*13,y)); } });
   const yb=head(dpos(bass),topB,18,bass); // clé de fa : Sol2 sur la ligne du bas
   o.push(`<ellipse cx="${x0}" cy="${yb}" rx="7" ry="4.6" fill="none" stroke="${INK}" stroke-width="2.6" transform="rotate(-15 ${x0} ${yb})"/>`);
-  if(bass.a) o.push(glyph(bass.a===1?'sharp':'flat',x0-20,yb+(bass.a===-1?3:5),15));
+  if(bass.a) o.push(accSvg(bass.a,x0-10,yb));
   return `<svg xmlns="http://www.w3.org/2000/svg" style="width:100%;height:auto;max-width:${Math.round(W*1.7)}px" viewBox="0 0 ${W} ${Ht}" role="img" aria-label="Accord sur basse, grand-portée">${o.join('')}</svg>`;
 }
 
@@ -1205,10 +1211,10 @@ function melFig(d,meter){ if(meter==='12/8') return {4:{f:1},8:{},12:{dot:1},24:
 function engraveMelody(mel,sk,o2){
   const meter=o2.meter||'4/4', top=58, Y=p=>top+4*SP-(p-BOT)*H, o=[], s=SIGN[sk];
   const [num,den]=meter.split('/'), units=meter==='3/4'?36:48, px=6.2;
-  const sigW=Math.abs(s)*10, x0=58+sigW+(num.length>1?36:28), mw=units*px+26, W=x0+2*mw+10, Ht=top+4*SP+56;
+  const sigW=Math.abs(s)*13, x0=58+sigW+(num.length>1?36:28), mw=units*px+26, W=x0+2*mw+10, Ht=top+4*SP+56;
   for(let l=0;l<5;l++) o.push(`<line x1="10" y1="${top+l*SP}" x2="${W-8}" y2="${top+l*SP}" stroke="${INK}"/>`);
   o.push(glyph('treble',14,top+31,40));
-  for(let i=0;i<Math.abs(s);i++){ const p=s>0?SH_POS[i]:FL_POS[i]; o.push(glyph(s>0?'sharp':'flat',50+i*10,Y(p)+(s>0?5:3),15)); }
+  for(let i=0;i<Math.abs(s);i++){ const p=s>0?SH_POS[i]:FL_POS[i]; o.push(accSvg(s>0?1:-1,62+i*13,Y(p),28)); }
   const tx=58+sigW+(num.length>1?14:8); o.push(`<text x="${tx}" y="${top+19}" text-anchor="middle" font-family="${SANS}" font-weight="700" font-size="19" fill="${INK}">${num}</text><text x="${tx}" y="${top+39}" text-anchor="middle" font-family="${SANS}" font-weight="700" font-size="19" fill="${INK}">${den}</text>`);
   if(o2.swing) o.push(`<text x="${x0-4}" y="14" font-family="${SANS}" font-weight="700" font-style="italic" font-size="13" fill="${INK}">Swing</text>`);
   o.push(`<line x1="${x0+mw-14}" y1="${top}" x2="${x0+mw-14}" y2="${top+40}" stroke="${INK}"/>`);
@@ -1230,7 +1236,7 @@ function engraveMelody(mel,sk,o2){
       for(let q=BOT+10;q<=e.p;q+=2) o.push(`<line x1="${e.x-11}" y1="${Y(q)}" x2="${e.x+11}" y2="${Y(q)}" stroke="${INK}"/>`);
       o.push(`<ellipse cx="${e.x}" cy="${e.y}" rx="6.3" ry="4.4" ${e.fg.open?`fill="none" stroke="${INK}" stroke-width="1.8"`:`fill="${INK}"`} transform="rotate(-20 ${e.x} ${e.y})"/>`);
       if(e.fg.dot) o.push(`<circle cx="${e.x+11}" cy="${(e.p%2===0?e.y-3:e.y)}" r="1.9" fill="${INK}"/>`);
-      if(e.acc!==null){ if(e.acc===1) o.push(glyph('sharp',e.x-19,e.y+5,15)); else if(e.acc===-1) o.push(glyph('flat',e.x-18,e.y+3,15)); else o.push(`<path d="M${e.x-15} ${e.y-9}V${e.y+4}M${e.x-10} ${e.y-4}V${e.y+9}M${e.x-15} ${e.y-1}L${e.x-10} ${e.y-3}M${e.x-15} ${e.y+4}L${e.x-10} ${e.y+2}" stroke="${INK}" stroke-width="1.4"/>`); }
+      if(e.acc!==null) o.push(accSvg(e.acc,e.x-8,e.y,28));
     });
     const sx=e=>upS?e.x+5.6:e.x-5.6;
     if(g.length>=2){
